@@ -6,7 +6,7 @@ from ableton.v2.base import listens
 from ableton.v2.control_surface import Component, device_to_appoint
 from ableton.v2.control_surface.control import ButtonControl
 from ableton.v2.control_surface.components import FlattenedDeviceChain
-from ableton.v2.control_surface.components.item_lister import ItemListerComponent, ItemProvider
+# from ableton.v2.control_surface.components.item_lister import ItemListerComponent, ItemProvider
 
 logger = logging.getLogger(__name__)
 import pprint
@@ -14,7 +14,7 @@ import pprint
 NavDirection = Live.Application.Application.View.NavDirection
 
 
-class SimpleDeviceNavigationComponent(ItemListerComponent):
+class SimpleDeviceNavigationComponent(Component):
     next_button = ButtonControl(color='Device.Navigation',
       pressed_color='Device.NavigationPressed')
     prev_button = ButtonControl(color='Device.Navigation',
@@ -22,6 +22,7 @@ class SimpleDeviceNavigationComponent(ItemListerComponent):
 
     def __init__(self, *args, device_component=None, item_provider=None, **keywords):
         logger.info('in __init()__')
+        (super(SimpleDeviceNavigationComponent, self).__init__)(*args, **keywords)
         self._device_component = device_component
 
 
@@ -29,9 +30,11 @@ class SimpleDeviceNavigationComponent(ItemListerComponent):
     def next_button(self, value):
         self._scroll_device_chain(NavDirection.right)
 
+
     @prev_button.pressed
     def prev_button(self, value):
         self._scroll_device_chain(NavDirection.left)
+
 
     def _scroll_device_chain(self, direction):
         logger.info('in _scroll_device_chain()')
@@ -51,16 +54,16 @@ class SimpleDeviceNavigationComponent(ItemListerComponent):
 
     def _update_device(self):
         logger.info('in _update_device()')
-        self._update_item_provider(self._device_component.device())
+        # self._update_item_provider(self._device_component.device())
 
 
-    @listens('selected_device')
-    def _device_selection_in_track_changed(self):
-        logger.info('in _device_selection_in_track_changed()')
-        new_selection = self.song.view.selected_track.view.selected_device
-        self._update_item_provider(new_selection)
+    # @listens('selected_device')
+    # def _device_selection_in_track_changed(self):
+    #     logger.info('in _device_selection_in_track_changed()')
+    #     new_selection = self.song.view.selected_track.view.selected_device
+    #     self._update_item_provider(new_selection)
 
 
-    def _update_item_provider(self, selection):
-        logger.info('in _device_selection_in_track_changed()')
-        self._flattened_chain.selected_item = selection
+    # def _update_item_provider(self, selection):
+    #     logger.info('in _device_selection_in_track_changed()')
+    #     self._flattened_chain.selected_item = selection

@@ -21,7 +21,7 @@ from .skin import skin
 from .elements import SESSION_WIDTH, SESSION_HEIGHT, NUM_SCENES, NUM_TRACKS, Elements
 from .simple_display import SimpleDisplayElement
 
-from .simple_device_component import SimpleDeviceParameterComponent
+from .my_simple_device_component import MySimpleDeviceParameterComponent
 from .simple_device_navigation_component import SimpleDeviceNavigationComponent
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class AAA(ControlSurface):
             self._create_mixer()
             self._create_transport()
             self._create_device_parameters()
-            self._create_device_navigation(device_component=self._device_parameters)
+            self._create_device_navigation()
             self._create_session_modes()
 
         """ Here is some Live API stuff just for fun """
@@ -172,7 +172,7 @@ class AAA(ControlSurface):
 
     def _create_device_parameters(self):
         logger.info('in _create_device_parameters()')
-        self._device_parameters = SimpleDeviceParameterComponent(name='Device_Parameters',
+        self._device_parameters = MySimpleDeviceParameterComponent(name='Device_Parameters',
           is_enabled=False,
           use_parameter_banks=True,
           layer=Layer(
