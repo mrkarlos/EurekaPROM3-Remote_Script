@@ -22,7 +22,7 @@ from .elements import SESSION_WIDTH, SESSION_HEIGHT, NUM_SCENES, NUM_TRACKS, Ele
 from .simple_display import SimpleDisplayElement
 
 from .my_simple_device_component import MySimpleDeviceParameterComponent
-from .simple_device_navigation_component import SimpleDeviceNavigationComponent
+from .my_simple_device_navigation_component import MySimpleDeviceNavigationComponent
 
 logger = logging.getLogger(__name__)
 import pprint
@@ -143,8 +143,8 @@ class AAA(ControlSurface):
             AddLayerMode(self._device_navigation, Layer(prev_button=self._button_8, next_button=self._button_9)),
             AddLayerMode(self._device_parameters,
                 Layer(
-                    bank_select_buttons=self.device_bank_button_matrix,
-                    device_on_off_button=self._button_4
+                    bank_select_buttons=self.device_bank_button_matrix
+                    # ,device_on_off_button=self._button_4
                 )
             )),
             behaviour=(MomentaryBehaviour())
@@ -176,8 +176,8 @@ class AAA(ControlSurface):
           is_enabled=False,
           use_parameter_banks=True,
           layer=Layer(
-            parameter_controls=self.device_parameter_controls_matrix,
-            device_on_off_button=self._button_4
+            parameter_controls=self.device_parameter_controls_matrix
+            # ,device_on_off_button=self._button_4
           )
         )
         self._device_parameters.set_enabled(True)
@@ -185,7 +185,7 @@ class AAA(ControlSurface):
 
     def _create_device_navigation(self, device_component=None):
         logger.info('in _create_device_navigation()')
-        self._device_navigation = SimpleDeviceNavigationComponent(name='Device_Navigation', device_component=device_component)
+        self._device_navigation = MySimpleDeviceNavigationComponent(name='Device_Navigation', device_component=device_component)
 
 
     def _create_session(self):

@@ -7,28 +7,9 @@ from ableton.v2.control_surface import Component
 from ableton.v2.control_surface.control import ToggleButtonControl
 from .fixed_radio_button_group import FixedRadioButtonGroup
 from .my_switch_control import MyMappedSwitchControl
+from .my_live_api_utils import release_control, collect_devices
 import logging
 logger = logging.getLogger(__name__)
-
-def release_control(control):
-    if liveobj_valid(control):
-        control.release_parameter()
-
-def nested_device_parent(device):
-    if device.can_have_chains:
-        if device.view.is_showing_chain_devices:
-            if not device.view.is_collapsed:
-                return device.view.selected_chain
-
-
-def collect_devices(track_or_chain, nesting_level=0):
-    chain_devices = track_or_chain.devices if liveobj_valid(track_or_chain) else []
-    devices = []
-    for device in chain_devices:
-        devices.append((device, nesting_level))
-        devices.extend(collect_devices((nested_device_parent(device)), nesting_level=(nesting_level + 1)))
-
-    return devices
 
 
 class MySimpleDeviceParameterComponent(Component):
@@ -36,7 +17,7 @@ class MySimpleDeviceParameterComponent(Component):
       unchecked_color='Mode.Device.Bank.Available',
       checked_color='Mode.Device.Bank.Selected')
     device_lock_button = ToggleButtonControl()
-    device_on_off_button = MyMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    # device_on_off_button = MyMappedSwitchControl(color='Device.Off', on_color='Device.On')
 
     @depends(device_provider=None)
     def __init__(self, device_provider=None, device_bank_registry=None, toggle_lock=None, use_parameter_banks=False, *a, **k):
@@ -175,7 +156,7 @@ class MySimpleDeviceParameterComponent(Component):
         for control in self._parameter_controls or []:
             release_control(control)
             self._empty_control_slots.register_slot(control, nop, 'value')
-        self.device_on_off_button.mapped_parameter = None
+        # self.device_on_off_button.mapped_parameter = None
 
 
     def _connect_parameters(self):
@@ -187,7 +168,7 @@ class MySimpleDeviceParameterComponent(Component):
                 else:
                     control.release_parameter()
                     self._empty_control_slots.register_slot(control, nop, 'value')
-        self.device_on_off_button.mapped_parameter = self._on_off_parameter()
+        # self.device_on_off_button.mapped_parameter = self._on_off_parameter()
 
 
 
