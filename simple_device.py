@@ -7,20 +7,22 @@ from ableton.v2.control_surface import Component
 from ableton.v2.control_surface.control import ToggleButtonControl
 from .fixed_radio_button_group import FixedRadioButtonGroup
 
+NUM_CONTROLS = 2
+
 def release_control(control):
     if liveobj_valid(control):
         control.release_parameter()
 
 
-class MySimpleDeviceParameterComponent(Component):
-    bank_select_buttons = FixedRadioButtonGroup(control_count=8,
+class MySimpleDeviceParameterComponentBase(Component):
+    bank_select_buttons = FixedRadioButtonGroup(control_count=4,
       unchecked_color='Mode.Device.Bank.Available',
       checked_color='Mode.Device.Bank.Selected')
     device_lock_button = ToggleButtonControl()
 
     @depends(device_provider=None)
     def __init__(self, device_provider=None, device_bank_registry=None, toggle_lock=None, use_parameter_banks=False, *a, **k):
-        (super(MySimpleDeviceParameterComponent, self).__init__)(*a, **k)
+        (super(MySimpleDeviceParameterComponentBase, self).__init__)(*a, **k)
         self._toggle_lock = toggle_lock
         self._use_parameter_banks = use_parameter_banks
         self._device = None
@@ -30,26 +32,26 @@ class MySimpleDeviceParameterComponent(Component):
         self._empty_control_slots = self.register_disconnectable(EventObject())
         self._device_bank_registry = device_bank_registry
         self._device_provider = device_provider
-        self._MySimpleDeviceParameterComponent__on_provided_device_changed.subject = device_provider
-        self._MySimpleDeviceParameterComponent__on_provided_device_changed()
+        self._MySimpleDeviceParameterComponentBase__on_provided_device_changed.subject = device_provider
+        self._MySimpleDeviceParameterComponentBase__on_provided_device_changed()
         if toggle_lock:
-            self._MySimpleDeviceParameterComponent__on_is_locked_to_device_changed.subject = self._device_provider
-            self._MySimpleDeviceParameterComponent__on_is_locked_to_device_changed()
+            self._MySimpleDeviceParameterComponentBase__on_is_locked_to_device_changed.subject = self._device_provider
+            self._MySimpleDeviceParameterComponentBase__on_is_locked_to_device_changed()
 
-    @bank_select_buttons.checked
-    def bank_select_buttons(self, button):
-        self._on_bank_select_button_checked(button)
+    # @bank_select_buttons.checked
+    # def bank_select_buttons(self, button):
+    #     self._on_bank_select_button_checked(button)
 
-    def _on_bank_select_button_checked(self, button):
-        self.bank_index = button.index
+    # def _on_bank_select_button_checked(self, button):
+    #     self.bank_index = button.index
 
-    @bank_select_buttons.value
-    def bank_select_buttons(self, value, _):
-        if not value:
-            self._on_bank_select_button_released()
+    # @bank_select_buttons.value
+    # def bank_select_buttons(self, value, _):
+    #     if not value:
+    #         self._on_bank_select_button_released()
 
-    def _on_bank_select_button_released(self):
-        pass
+    # def _on_bank_select_button_released(self):
+    #     pass
 
     @device_lock_button.toggled
     def device_lock_button(self, *_):
@@ -98,7 +100,7 @@ class MySimpleDeviceParameterComponent(Component):
             release_control(control)
 
         self._device = self._device_provider.device
-        self._MySimpleDeviceParameterComponent__on_bank_changed.subject = self._device_bank_registry
+        self._MySimpleDeviceParameterComponentBase__on_bank_changed.subject = self._device_bank_registry
         if self._device_bank_registry:
             self._bank_index = self._device_bank_registry.get_device_bank(self._device)
             self.update()
@@ -115,10 +117,10 @@ class MySimpleDeviceParameterComponent(Component):
         self._update_device_lock_button()
 
     def update(self):
-        super(MySimpleDeviceParameterComponent, self).update()
+        super(MySimpleDeviceParameterComponentBase, self).update()
         if self.is_enabled():
             self._update_parameter_banks()
-            self._update_bank_select_buttons()
+            # self._update_bank_select_buttons()
             self._empty_control_slots.disconnect()
             if liveobj_valid(self._device):
                 self._connect_parameters()
@@ -159,3 +161,24 @@ class MySimpleDeviceParameterComponent(Component):
 
     def _update_device_lock_button(self):
         self.device_lock_button.is_toggled = self._device_provider.is_locked_to_device
+
+
+class MySimpleDeviceParameterComponent(MySimpleDeviceParameterComponentBase):
+
+    def __init__(self, *a, **k):
+        (super(MySimpleDeviceParameterComponent, self).__init__)(*a, **k)
+        self._parameter_offset = 0
+
+    def toggle_parameter_offset(self):
+        self._parameter_offset = NUM_CONTROLS - self._parameter_offset
+        self.update()
+
+    @MySimpleDeviceParameterComponentBase.selected_bank.getter
+    def selected_bank(self):
+        bank = self._banks[0] or []
+        if self._parameter_offset:
+            if len(bank) > self._parameter_offset:
+                offset_bank = bank[self._parameter_offset:]
+                if any(offset_bank):
+                    return offset_bank
+        return bank

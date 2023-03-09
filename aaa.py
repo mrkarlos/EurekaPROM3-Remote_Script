@@ -23,7 +23,7 @@ from .skin import skin
 from .elements import SESSION_WIDTH, SESSION_HEIGHT, NUM_SCENES, NUM_TRACKS, Elements
 from .simple_display import SimpleDisplayElement
 
-from .my_simple_device_component import MySimpleDeviceParameterComponent
+# from .my_simple_device_component import MySimpleDeviceParameterComponent
 from .simple_device import MySimpleDeviceParameterComponent
 from .my_simple_device_navigation_component import MySimpleDeviceNavigationComponent
 
@@ -95,7 +95,7 @@ class AAA(ControlSurface):
         self.pedal_pair_matrix = ButtonMatrixElement(rows=[pedal_pair_raw], name='Pedal_Pair_Matrix')
 
         device_parameter_controls_raw = [self._pedal_a, self._pedal_b]
-        self._device_parameter_controls_matrix = ButtonMatrixElement(rows=[device_parameter_controls_raw], name='Device_Parameter_Controls_Matrix')
+        self._device_parameter_controls = ButtonMatrixElement(rows=[device_parameter_controls_raw], name='Parameter_Controls')
         device_on_off_button_matrix_raw = [self._button_1, self._button_2, self._button_3, self._button_4]
         self._device_on_off_button_row = ButtonMatrixElement(rows=[device_on_off_button_matrix_raw], name='Device_On_off_Buttons_Matrix')
 
@@ -126,7 +126,7 @@ class AAA(ControlSurface):
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('dev', (
-              AddLayerMode(self._device_parameters, layer=self._create_device_parameter_layer()),
+            #   AddLayerMode(self._device_parameters, layer=self._create_device_parameter_layer()),
               AddLayerMode(self._device_navigation, layer=self._create_device_navigation_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
@@ -176,7 +176,7 @@ class AAA(ControlSurface):
 
     def _create_device_parameters(self):
         logger.info('in _create_device_parameters()')
-        self._device_parameters = MySimpleDeviceParameterComponent(name='Device_Parameters',
+        self._device_parameters = MySimpleDeviceParameterComponent(name='Device',
           is_enabled=False,
           use_parameter_banks=True,
           layer=self._create_device_parameter_layer())
@@ -234,8 +234,10 @@ class AAA(ControlSurface):
 
     def _create_device_parameter_layer(self):
         logger.info('in _create_device_parameter_layer()')
-        return Layer(parameter_controls=self._device_parameter_controls_matrix,
+        return Layer(parameter_controls=self._device_parameter_controls,
                      bank_select_buttons=self._device_on_off_button_row)
+        # return Layer(parameter_controls=self._device_parameter_controls)
+        # return Layer(bank_select_buttons=self._device_on_off_button_row)
 
 
     def _create_channel_strip_layer(self):
