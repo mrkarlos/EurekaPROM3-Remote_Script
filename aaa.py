@@ -23,8 +23,8 @@ from .skin import skin
 from .elements import SESSION_WIDTH, SESSION_HEIGHT, NUM_SCENES, NUM_TRACKS, Elements
 from .simple_display import SimpleDisplayElement
 
-# from .my_simple_device_component import MySimpleDeviceParameterComponent
-from .simple_device import MySimpleDeviceParameterComponent
+from .my_simple_device_component import MySimpleDeviceParameterComponent
+# from .simple_device import MySimpleDeviceParameterComponent
 from .my_simple_device_navigation_component import MySimpleDeviceNavigationComponent
 
 logger = logging.getLogger(__name__)
@@ -95,9 +95,9 @@ class AAA(ControlSurface):
         self.pedal_pair_matrix = ButtonMatrixElement(rows=[pedal_pair_raw], name='Pedal_Pair_Matrix')
 
         device_parameter_controls_raw = [self._pedal_a, self._pedal_b]
-        self._device_parameter_controls = ButtonMatrixElement(rows=[device_parameter_controls_raw], name='Parameter_Controls')
+        self.device_parameter_controls = ButtonMatrixElement(rows=[device_parameter_controls_raw], name='Device_Parameter_Controls')
         device_on_off_button_matrix_raw = [self._button_1, self._button_2, self._button_3, self._button_4]
-        self._device_on_off_button_row = ButtonMatrixElement(rows=[device_on_off_button_matrix_raw], name='Device_On_off_Buttons_Matrix')
+        self.device_on_off_buttons = ButtonMatrixElement(rows=[device_on_off_button_matrix_raw], name='Device_On_off_Buttons')
 
         # Clip launch config
         clip_buttons_raw = [self._button_1, self._button_2, self._button_3, self._button_4]
@@ -121,36 +121,38 @@ class AAA(ControlSurface):
           support_momentary_mode_cycling=True,
           layer=Layer(cycle_mode_button=(self._button_down),cycle_up_mode_button=(self._button_up)))
         self._session_modes.add_mode('launch', ( 
-              AddLayerMode(self._session, layer=self._create_session_layer()),
-              AddLayerMode(self._mixer.selected_strip, layer=self._create_channel_strip_encoders_layer()),
+              AddLayerMode((self._session), layer=self._create_session_layer()),
+              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('dev', (
-            #   AddLayerMode(self._device_parameters, layer=self._create_device_parameter_layer()),
-              AddLayerMode(self._device_navigation, layer=self._create_device_navigation_layer()),
+              AddLayerMode((self._device_parameters), layer=self._create_device_parameter_layer()),
+              AddLayerMode((self._device_navigation), layer=self._create_device_navigation_layer()),
+              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_buttons_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('mute', ( 
-              AddLayerMode(self._mixer, layer=self._create_mute_layer()), 
-              AddLayerMode(self._mixer.selected_strip, layer=self._create_channel_strip_encoders_layer()),
+              AddLayerMode((self._mixer), layer=self._create_mute_layer()), 
+              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
             ),
             behaviour=(MomentaryBehaviour())  )
         self._session_modes.add_mode('solo', ( 
-              AddLayerMode(self._mixer, layer=self._create_solo_layer()),
-              AddLayerMode(self._mixer.selected_strip, layer=self._create_channel_strip_encoders_layer()),
+              AddLayerMode((self._mixer), layer=self._create_solo_layer()),
+              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('arm', (
-              AddLayerMode(self._mixer, layer=self._create_arm_layer()),
-              AddLayerMode(self._mixer.selected_strip, layer=self._create_channel_strip_encoders_layer()),
+              AddLayerMode((self._mixer), layer=self._create_arm_layer()),
+              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('chan_strip', (
-              AddLayerMode(self._mixer.selected_strip, layer=self._create_channel_strip_layer()),
+              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_buttons_layer()),
+              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('transport', (
-              AddLayerMode(self._transport, layer=self._create_transport_control_layer())
+              AddLayerMode((self._transport), layer=self._create_transport_control_layer())
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.selected_mode = 'launch'
@@ -178,7 +180,6 @@ class AAA(ControlSurface):
         logger.info('in _create_device_parameters()')
         self._device_parameters = MySimpleDeviceParameterComponent(name='Device',
           is_enabled=False,
-          use_parameter_banks=True,
           layer=self._create_device_parameter_layer())
         self._device_parameters.set_enabled(True)
 
@@ -217,7 +218,17 @@ class AAA(ControlSurface):
           down_button=self._button_5,
           left_button=self._button_8,
           right_button=self._button_9)
-    
+
+    def _create_session_navigation_up_down_layer(self):
+        logger.info('in _create_session_navigation_layer()')
+        return Layer(up_button=self._button_0,
+                     down_button=self._button_5)
+
+    def _create_session_navigation_left_right_layer(self):
+        logger.info('in _create_session_navigation_layer()')
+        return Layer(left_button=self._button_8,
+                     right_button=self._button_9)
+     
 
     def _create_track_navigation_layer(self):
         logger.info('in _create_track_navigation_layer()')
@@ -229,25 +240,24 @@ class AAA(ControlSurface):
         logger.info('in _create_device_navigation_layer()')
         return Layer(prev_button=self._button_8,
                      next_button=self._button_9)
-                    #  device_on_off_buttons=self._device_on_off_button_row)
     
 
     def _create_device_parameter_layer(self):
         logger.info('in _create_device_parameter_layer()')
-        return Layer(parameter_controls=self._device_parameter_controls,
-                     bank_select_buttons=self._device_on_off_button_row)
-        # return Layer(parameter_controls=self._device_parameter_controls)
-        # return Layer(bank_select_buttons=self._device_on_off_button_row)
+        # return Layer(parameter_controls=self.device_parameter_controls,
+        #              bank_select_buttons=self.device_on_off_buttons)
+        return Layer(parameter_controls=self.device_parameter_controls)
+        # return Layer(bank_select_buttons=self.device_on_off_buttons)
 
 
-    def _create_channel_strip_layer(self):
-        logger.info('in _create_channel_strip_layer()')
+    def _create_channel_strip_buttons_layer(self):
+        logger.info('in _create_channel_strip_buttons_layer()')
         return Layer(mute_button=self._button_1,
                      solo_button=self._button_2,
                      arm_button=self._button_3,
-                     track_stop_button=self._button_4,
-                     volume_control=self._pedal_a,
-                     pan_control=self._pedal_b)
+                     track_stop_button=self._button_4)
+                    #  volume_control=self._pedal_a,
+                    #  pan_control=self._pedal_b)
 
 
     def _create_channel_strip_encoders_layer(self):
@@ -255,11 +265,6 @@ class AAA(ControlSurface):
         return Layer(volume_control=self._pedal_a,
                      pan_control=self._pedal_b)
     
-
-    def _create_channel_strip_encoders_layer(self):
-        logger.info('in _create_channel_strip_encoders_layer()')
-        return Layer(volume_control=self._pedal_a, pan_control=self._pedal_b)
-
 
     def _create_transport_control_layer(self):
         logger.info('in _create_transport_control_layer()')

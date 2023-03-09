@@ -6,6 +6,7 @@ from ableton.v2.base import EventObject, clamp, depends, listens, liveobj_valid,
 from ableton.v2.control_surface import Component
 from ableton.v2.control_surface.control import ToggleButtonControl
 from .fixed_radio_button_group import FixedRadioButtonGroup
+from novation.simple_device import SimpleDeviceParameterComponent as SimpleDeviceParameterComponentBase
 
 NUM_CONTROLS = 2
 
@@ -163,7 +164,7 @@ class MySimpleDeviceParameterComponentBase(Component):
         self.device_lock_button.is_toggled = self._device_provider.is_locked_to_device
 
 
-class MySimpleDeviceParameterComponent(MySimpleDeviceParameterComponentBase):
+class MySimpleDeviceParameterComponent(SimpleDeviceParameterComponentBase):
 
     def __init__(self, *a, **k):
         (super(MySimpleDeviceParameterComponent, self).__init__)(*a, **k)
@@ -173,7 +174,7 @@ class MySimpleDeviceParameterComponent(MySimpleDeviceParameterComponentBase):
         self._parameter_offset = NUM_CONTROLS - self._parameter_offset
         self.update()
 
-    @MySimpleDeviceParameterComponentBase.selected_bank.getter
+    @SimpleDeviceParameterComponentBase.selected_bank.getter
     def selected_bank(self):
         bank = self._banks[0] or []
         if self._parameter_offset:
