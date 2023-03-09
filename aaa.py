@@ -12,8 +12,6 @@ from ableton.v2.control_surface import midi
 from ableton.v2.control_surface.control import ButtonControl
 from ableton.v2.control_surface.mode import LayerMode, AddLayerMode, ModesComponent, MomentaryBehaviour, LatchingBehaviour
 
-from .my_mode import LayerMode, AddLayerMode, ModesComponent, MomentaryBehaviour, LatchingBehaviour
-
 from .my_button_element import MyButtonElement
 from .my_modes_component import MyModesComponent
 from .my_session_component import MySessionComponent
@@ -21,11 +19,9 @@ from .my_channel_strip_component import MyChannelStripComponent
 from .consts import *
 from .skin import skin
 from .elements import SESSION_WIDTH, SESSION_HEIGHT, NUM_SCENES, NUM_TRACKS, Elements
-from .simple_display import SimpleDisplayElement
-
 from .my_simple_device_component import MySimpleDeviceParameterComponent
-# from .simple_device import MySimpleDeviceParameterComponent
 from .my_simple_device_navigation_component import MySimpleDeviceNavigationComponent
+from .simple_display import SimpleDisplayElement
 
 logger = logging.getLogger(__name__)
 import pprint

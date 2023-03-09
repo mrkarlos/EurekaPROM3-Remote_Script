@@ -1,7 +1,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 from ableton.v2.control_surface.mode import MomentaryBehaviour, LatchingBehaviour
 # from ableton.v2.control_surface.control import ButtonControl
-from .my_mode import ModesComponent, MomentaryBehaviour, LatchingBehaviour
+from ableton.v2.control_surface.mode import ModesComponent, MomentaryBehaviour, LatchingBehaviour
 from .my_switch_control import MySwitchControl
 
 import logging
