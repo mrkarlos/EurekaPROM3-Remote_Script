@@ -13,11 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 class MySimpleDeviceParameterComponent(Component):
-    # bank_select_buttons = FixedRadioButtonGroup(control_count=2,
-    #   unchecked_color='Mode.Device.Bank.Available',
-    #   checked_color='Mode.Device.Bank.Selected')
+    bank_select_buttons = FixedRadioButtonGroup(control_count=2,
+      unchecked_color='Mode.Device.Bank.Available',
+      checked_color='Mode.Device.Bank.Selected')
     device_lock_button = ToggleButtonControl()
-    # device_on_off_button = MyMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    # device_on_off_control = MyMappedSwitchControl(color='Device.Off', on_color='Device.On')
 
     @depends(device_provider=None)
     def __init__(self, device_provider=None, device_bank_registry=None, toggle_lock=None, use_parameter_banks=False, *a, **k):
@@ -38,24 +38,24 @@ class MySimpleDeviceParameterComponent(Component):
             self._MySimpleDeviceParameterComponent__on_is_locked_to_device_changed.subject = self._device_provider
             self._MySimpleDeviceParameterComponent__on_is_locked_to_device_changed()
 
-    # @bank_select_buttons.checked
-    # def bank_select_buttons(self, button):
-    #     logger.debug('bank_select_buttons().checked')
-    #     self._on_bank_select_button_checked(button)
+    @bank_select_buttons.checked
+    def bank_select_buttons(self, button):
+        logger.debug('bank_select_buttons().checked')
+        self._on_bank_select_button_checked(button)
 
-    # def _on_bank_select_button_checked(self, button):
-    #     logger.debug('_on_bank_select_button_checked()')
-    #     self.bank_index = button.index
+    def _on_bank_select_button_checked(self, button):
+        logger.debug('_on_bank_select_button_checked()')
+        self.bank_index = button.index
 
-    # @bank_select_buttons.value
-    # def bank_select_buttons(self, value, _):
-    #     logger.debug('bank_select_buttons()')
-    #     if not value:
-    #         self._on_bank_select_button_released()
+    @bank_select_buttons.value
+    def bank_select_buttons(self, value, _):
+        logger.debug('bank_select_buttons()')
+        if not value:
+            self._on_bank_select_button_released()
 
-    # def _on_bank_select_button_released(self):
-    #     logger.debug('_on_bank_select_button_released()')
-    #     pass
+    def _on_bank_select_button_released(self):
+        logger.debug('_on_bank_select_button_released()')
+        pass
 
     @device_lock_button.toggled
     def device_lock_button(self, *_):
@@ -148,7 +148,7 @@ class MySimpleDeviceParameterComponent(Component):
         super(MySimpleDeviceParameterComponent, self).update()
         if self.is_enabled():
             self._update_parameter_banks()
-            # self._update_bank_select_buttons()
+            self._update_bank_select_buttons()
             self._empty_control_slots.disconnect()
             if liveobj_valid(self._device):
                 self._connect_parameters()
@@ -207,11 +207,11 @@ class MySimpleDeviceParameterComponent(Component):
         self._bank_index = self._clamp_to_bank_size(self._bank_index)
 
 
-    # def _update_bank_select_buttons(self):
-    #     logger.debug('_update_bank_select_buttons()')
-    #     self.bank_select_buttons.active_control_count = self.num_banks
-    #     if self.bank_index < self.num_banks:
-    #         self.bank_select_buttons[self.bank_index].is_checked = True
+    def _update_bank_select_buttons(self):
+        logger.debug('_update_bank_select_buttons()')
+        self.bank_select_buttons.active_control_count = self.num_banks
+        if self.bank_index < self.num_banks:
+            self.bank_select_buttons[self.bank_index].is_checked = True
 
 
     def _update_device_lock_button(self):
