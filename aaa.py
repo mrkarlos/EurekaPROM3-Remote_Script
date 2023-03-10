@@ -124,7 +124,7 @@ class AAA(ControlSurface):
         self._session_modes.add_mode('dev', (
               AddLayerMode((self._device_parameters), layer=self._create_device_parameter_layer()),
               AddLayerMode((self._device_navigation), layer=self._create_device_navigation_layer()),
-              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_buttons_layer()),
+              AddLayerMode((self._device_navigation), layer=self._create_device_navigation_on_off_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('mute', ( 
@@ -148,7 +148,7 @@ class AAA(ControlSurface):
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('transport', (
-              AddLayerMode((self._transport), layer=self._create_transport_control_layer())
+              AddLayerMode((self._transport), layer=self._create_transport_control_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.selected_mode = 'launch'
@@ -237,13 +237,17 @@ class AAA(ControlSurface):
         return Layer(prev_button=self._button_8,
                      next_button=self._button_9)
     
+    def _create_device_navigation_on_off_layer(self):
+        logger.info('in _create_device_navigation_on_off_layer()')
+        return Layer(on_off_control_1=self._button_1,
+                     on_off_control_2=self._button_2,
+                     on_off_control_3=self._button_3,
+                     on_off_control_4=self._button_4,
+                    )
 
     def _create_device_parameter_layer(self):
         logger.info('in _create_device_parameter_layer()')
-        # return Layer(parameter_controls=self.device_parameter_controls,
-        #              bank_select_buttons=self.device_on_off_buttons)
         return Layer(parameter_controls=self.device_parameter_controls)
-        # return Layer(bank_select_buttons=self.device_on_off_buttons)
 
 
     def _create_channel_strip_buttons_layer(self):
@@ -251,9 +255,8 @@ class AAA(ControlSurface):
         return Layer(mute_button=self._button_1,
                      solo_button=self._button_2,
                      arm_button=self._button_3,
-                     track_stop_button=self._button_4)
-                    #  volume_control=self._pedal_a,
-                    #  pan_control=self._pedal_b)
+                     track_stop_button=self._button_4,
+                    )
 
 
     def _create_channel_strip_encoders_layer(self):

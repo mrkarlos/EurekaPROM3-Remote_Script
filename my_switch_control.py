@@ -48,12 +48,12 @@ class MySwitchControl(ButtonControl):
                 
                 
         def _on_pressed(self):
-            logger.debug('in _on_pressed()')
+            logger.info('in _on_pressed()')
             super(MySwitchControl.State, self)._on_pressed()
 
 
         def _on_released(self):
-            logger.debug('in _on_released()')
+            logger.info('in _on_released()')
             super(MySwitchControl.State, self)._on_released()
 
 

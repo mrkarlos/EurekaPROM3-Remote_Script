@@ -116,7 +116,7 @@ class MySimpleDeviceParameterComponent(Component):
 
     @listens('device')
     def __on_provided_device_changed(self):
-        logger.debug('__on_provided_device_changed().listens')
+        logger.info('__on_provided_device_changed().listens')
 
         for control in self._parameter_controls or []:
             release_control(control)
