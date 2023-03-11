@@ -8,7 +8,7 @@ from ableton.v2.control_surface.components import SessionNavigationComponent, Sc
 from ableton.v2.control_surface.component import Component
 # from ableton.v2.control_surface.components.scroll import Scrollable, ScrollComponent
 
-from .my_scroll_component import ScrollComponent
+from .my_scroll_component import MyScrollComponent
 
 import logging
 logger = logging.getLogger(__name__)
@@ -26,13 +26,13 @@ class MySessionNavigationComponent(Component):
         self._MySessionNavigationComponent__on_offset_changed.subject = self._session_ring
         self._MySessionNavigationComponent__on_tracks_changed.subject = self._session_ring
         self._MySessionNavigationComponent__on_scene_list_changed.subject = self.song
-        self._vertical_banking = ScrollComponent((self.scene_scroller_type(session_ring)),
+        self._vertical_banking = MyScrollComponent((self.scene_scroller_type(session_ring)),
           parent=self)
-        self._horizontal_banking = ScrollComponent((self.track_scroller_type(session_ring)),
+        self._horizontal_banking = MyScrollComponent((self.track_scroller_type(session_ring)),
           parent=self)
-        self._vertical_paginator = ScrollComponent((self.scene_pager_type(session_ring)),
+        self._vertical_paginator = MyScrollComponent((self.scene_pager_type(session_ring)),
           parent=self)
-        self._horizontal_paginator = ScrollComponent((self.track_pager_type(session_ring)),
+        self._horizontal_paginator = MyScrollComponent((self.track_pager_type(session_ring)),
           parent=self)
 
     @listens('offset')
