@@ -66,13 +66,13 @@ class MyMappableSwitch(EventObject):
 
     def __init__(self, *a, **k):
         logger.info('in __init__()')
-        (super().__init__)(*a, **k)
+        (super(MyMappableSwitch, self).__init__)(*a, **k)
         self._parameter = None
 
     def disconnect(self):
         logger.info('in disconnect()')
         self._parameter = None
-        super().disconnect()
+        super(MyMappableSwitch, self).disconnect()
 
     @property
     def mapped_parameter(self):
@@ -97,13 +97,19 @@ class MyMappedSwitchControl(MySwitchControl):
 
     class State(MySwitchControl.State, MyMappableSwitch):
 
-        def __init__(self, *a, **k):
-            logger.info('in __init__()')
-            (super().__init__)(*a, **k)
+        def __init__(self, *args, **kwargs):
+            logger.info('MyMappedSwitchControl.State in __init__()')
+            (super(MyMappedSwitchControl.State, self).__init__)(*args, **kwargs)
             self.enabled = False
 
 
-        def _call_listener(self, listener_name, *_):
+        def _call_listener(self, listener_name, *args, **kwargs):
             logger.info('in _call_listener()')
             if listener_name == 'pressed':
                 toggle_or_cycle_parameter_value(self.mapped_parameter)
+
+
+    def __init__(self, *args, **kwargs):
+        logger.info('MyMappedSwitchControl in __init__()')
+        (super(MyMappedSwitchControl, self).__init__)(*args, **kwargs)
+

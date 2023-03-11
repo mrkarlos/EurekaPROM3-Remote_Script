@@ -15,6 +15,7 @@ from ableton.v2.control_surface.mode import LayerMode, AddLayerMode, ModesCompon
 from .my_button_element import MyButtonElement
 from .my_modes_component import MyModesComponent
 from .my_session_component import MySessionComponent
+from .my_session_navigation_component import MySessionNavigationComponent
 from .my_channel_strip_component import MyChannelStripComponent
 from .consts import *
 from .skin import skin
@@ -196,7 +197,7 @@ class AAA(ControlSurface):
           is_enabled=False,
           session_ring=(self._session_ring))
         self._session.set_enabled(True)
-        self._session_navigation = SessionNavigationComponent(name='Session_Navigation',
+        self._session_navigation = MySessionNavigationComponent(name='Session_Navigation',
           is_enabled=False,
           session_ring=(self._session_ring),
           layer=(self._create_session_navigation_layer()))
