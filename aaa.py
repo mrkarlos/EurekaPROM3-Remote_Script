@@ -211,10 +211,13 @@ class AAA(ControlSurface):
 
     def _create_session_navigation_layer(self):
         logger.info('in _create_session_navigation_layer()')
-        return Layer(up_button=self._button_0,
-          down_button=self._button_5,
+        return Layer(
+        #   up_button=self._button_0,
+        #   down_button=self._button_5,
+          up_down_button=self._button_0,
           left_button=self._button_8,
-          right_button=self._button_9)
+          right_button=self._button_9,
+          )
 
     def _create_session_navigation_up_down_layer(self):
         logger.info('in _create_session_navigation_layer()')
