@@ -24,3 +24,8 @@ class MySessionNavigationComponent(SessionNavigationComponent):
 
     def set_up_down_button(self, button):
         self._vertical_banking.set_scroll_up_down_button(button)
+
+    def set_left_right_button(self, button):
+        self._horizontal_banking.set_scroll_left_right_button(button)
+        self._horizontal_banking.update()
+

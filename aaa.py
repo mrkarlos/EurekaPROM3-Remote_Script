@@ -215,8 +215,9 @@ class AAA(ControlSurface):
         #   up_button=self._button_0,
         #   down_button=self._button_5,
           up_down_button=self._button_0,
-          left_button=self._button_8,
-          right_button=self._button_9,
+        #   left_button=self._button_8,
+        #   right_button=self._button_9,
+          left_right_button=self._button_9,
           )
 
     def _create_session_navigation_up_down_layer(self):

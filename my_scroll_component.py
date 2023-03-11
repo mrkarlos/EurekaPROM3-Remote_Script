@@ -12,6 +12,7 @@ class MyScrollComponent(ScrollComponent, Scrollable):
     # scroll_up_button = MySwitchControl()
     # scroll_down_button = MySwitchControl()
     scroll_up_down_button = MySwitchControl()
+    scroll_left_right_button = MySwitchControl()
 
     def __init__(self, scrollable=None, *a, **k):
         logger.info('in __init__()')
@@ -24,7 +25,6 @@ class MyScrollComponent(ScrollComponent, Scrollable):
     def set_scroll_up_down_button(self, button):
         self.scroll_up_down_button.set_control_element(button)
         self._update_scroll_buttons()
-
 
     @scroll_up_down_button.pressed
     def scroll_up_down_button(self, button):
@@ -45,4 +45,30 @@ class MyScrollComponent(ScrollComponent, Scrollable):
     @scroll_up_down_button.released_delayed
     def scroll_up_down_button(self, button):
         logger.info('in scroll_up_down_button().released_delayed')
+        self.scroll_up()
+
+
+    def set_scroll_left_right_button(self, button):
+        self.scroll_left_right_button.set_control_element(button)
+        self._update_scroll_buttons()
+
+
+    @scroll_left_right_button.pressed
+    def scroll_left_right_button(self, button):
+        logger.info('in scroll_left_right_button().pressed')
+        pass
+
+    @scroll_left_right_button.released
+    def scroll_left_right_button(self, button):
+        logger.info('in scroll_left_right_button().released')
+        pass
+
+    @scroll_left_right_button.released_immediately
+    def scroll_left_right_button(self, button):
+        logger.info('in scroll_left_right_button().released_immediately')
+        self.scroll_down()
+
+    @scroll_left_right_button.released_delayed
+    def scroll_left_right_button(self, button):
+        logger.info('in scroll_left_right_button().released_delayed')
         self.scroll_up()
