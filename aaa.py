@@ -10,7 +10,7 @@ from ableton.v2.control_surface.components import TransportComponent, MixerCompo
 from ableton.v2.control_surface.elements import ButtonElement, EncoderElement, ButtonMatrixElement
 from ableton.v2.control_surface import midi
 from ableton.v2.control_surface.control import ButtonControl
-from ableton.v2.control_surface.mode import LayerMode, AddLayerMode, ModesComponent, MomentaryBehaviour, LatchingBehaviour
+from ableton.v2.control_surface.mode import LayerMode, AddLayerMode, EnablingMode, SetAttributeMode, ModesComponent, MomentaryBehaviour, LatchingBehaviour
 
 from .my_button_element import MyButtonElement
 from .my_modes_component import MyModesComponent
@@ -97,8 +97,10 @@ class AAA(ControlSurface):
         self.device_on_off_buttons = ButtonMatrixElement(rows=[device_on_off_button_matrix_raw], name='Device_On_off_Buttons')
 
         # Clip launch config
-        clip_buttons_raw = [self._button_1, self._button_2, self._button_3, self._button_4]
-        self.clip_launch_matrix = ButtonMatrixElement(rows=[clip_buttons_raw], name='Clip_Launch_Matrix')
+        horizontal_clip_buttons_raw = [self._button_1, self._button_2, self._button_3, self._button_4]
+        self.horizontal_clip_launch_matrix = ButtonMatrixElement(rows=[horizontal_clip_buttons_raw], name='Horizontal_Clip_Launch_Matrix')
+        vertical_clip_buttons_raw = [[self._button_1], [self._button_2], [self._button_3], [self._button_4]]
+        self.vertical_clip_launch_matrix = ButtonMatrixElement(rows=vertical_clip_buttons_raw, name='Vertical_Clip_Launch_Matrix')
 
 
     def _create_transport(self):
@@ -118,38 +120,52 @@ class AAA(ControlSurface):
           support_momentary_mode_cycling=True,
           layer=Layer(cycle_mode_button=(self._button_down),cycle_up_mode_button=(self._button_up)))
         self._session_modes.add_mode('launch', ( 
+              EnablingMode((self._horizontal_session_ring)),
               AddLayerMode((self._session), layer=self._create_session_layer()),
               AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_layer())
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('dev', (
+              EnablingMode((self._vertical_session_ring)),
               AddLayerMode((self._device_parameters), layer=self._create_device_parameter_layer()),
               AddLayerMode((self._device_navigation), layer=self._create_device_navigation_layer()),
               AddLayerMode((self._device_navigation), layer=self._create_device_navigation_on_off_layer()),
+              AddLayerMode(( self._vertical_session_navigation), layer=self._create_session_navigation_layer())
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('mute', ( 
+              EnablingMode((self._horizontal_session_ring)),
               AddLayerMode((self._mixer), layer=self._create_mute_layer()), 
               AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_layer())
             ),
             behaviour=(MomentaryBehaviour())  )
         self._session_modes.add_mode('solo', ( 
+              EnablingMode((self._horizontal_session_ring)),
               AddLayerMode((self._mixer), layer=self._create_solo_layer()),
               AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('arm', (
+              EnablingMode((self._horizontal_session_ring)),
               AddLayerMode((self._mixer), layer=self._create_arm_layer()),
               AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('chan_strip', (
+              EnablingMode((self._vertical_session_ring)),
               AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_buttons_layer()),
               AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
+              AddLayerMode(( self._vertical_session_navigation), layer=self._create_session_navigation_layer())
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('transport', (
+            #   EnablingMode((self._horizontal_session_ring)),
               AddLayerMode((self._transport), layer=self._create_transport_control_layer()),
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_layer())
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.selected_mode = 'launch'
@@ -167,7 +183,8 @@ class AAA(ControlSurface):
         logger.info('in _create_mixer()')
         self._mixer = MixerComponent(name='Mixer',
           auto_name=True,
-          tracks_provider=(self._session_ring),
+        #   tracks_provider=(self._vertical_session_ring),
+          tracks_provider=(self._horizontal_session_ring),
           track_assigner=(SimpleTrackAssigner()),
           invert_mute_feedback=True,
           channel_strip_component_type=MyChannelStripComponent)
@@ -189,24 +206,48 @@ class AAA(ControlSurface):
 
     def _create_session(self):
         logger.info('in _create_session()')
-        self._session_ring = SessionRingComponent(name='Session_Ring',
-          is_enabled=True,
-          num_tracks=SESSION_WIDTH,
-          num_scenes=SESSION_HEIGHT)
+        self.create_session_rings()
         self._session = MySessionComponent(name='Session',
           is_enabled=False,
-          session_ring=(self._session_ring))
+          session_ring=(self._horizontal_session_ring))
         self._session.set_enabled(True)
-        self._session_navigation = MySessionNavigationComponent(name='Session_Navigation',
+        self.create_session_navigations()
+
+        self._horizontal_session_navigation.set_enabled(True)
+        self._horizontal_session_ring.set_enabled(True)
+        self._vertical_session_navigation.set_enabled(True)
+        self._vertical_session_ring.set_enabled(False)
+
+
+    def create_session_rings(self):
+        self._horizontal_session_ring = SessionRingComponent(name='Horizontal_Session_Ring',
           is_enabled=False,
-          session_ring=(self._session_ring),
-          layer=(self._create_session_navigation_layer()))
-        self._session_navigation.set_enabled(True)
+          num_tracks=SESSION_WIDTH,
+          num_scenes=SESSION_HEIGHT)
+        self._vertical_session_ring = SessionRingComponent(name='Vertial_Session_Ring',
+          is_enabled=False,
+          num_tracks=SESSION_HEIGHT,
+          num_scenes=SESSION_WIDTH)
+    
+    def get_horizontal_ring_offsets(self):
+        return (self._horizontal_session_ring.track_offset, self._horizontal_session_ring.scene_offset)
+
+    def get_vertical_ring_offsets(self):
+        return (self._vertical_session_ring.track_offset, self._vertical_session_ring.scene_offset)
+
+    def create_session_navigations(self):
+        self._horizontal_session_navigation = MySessionNavigationComponent(name='Horizontal_Session_Navigation',
+          is_enabled=False,
+          session_ring=(self._horizontal_session_ring))
+        self._vertical_session_navigation = MySessionNavigationComponent(name='Vertical_Session_Navigation',
+          is_enabled=False,
+          session_ring=(self._vertical_session_ring))
 
 
     def _create_session_layer(self):
         logger.info('in _create_session_layer()')
-        return Layer(clip_launch_buttons=self.clip_launch_matrix)
+        # return Layer(clip_launch_buttons=self.vertical_clip_launch_matrix)
+        return Layer(clip_launch_buttons=self.horizontal_clip_launch_matrix)
 
 
     def _create_session_navigation_layer(self):
@@ -221,12 +262,13 @@ class AAA(ControlSurface):
           )
 
     def _create_session_navigation_up_down_layer(self):
-        logger.info('in _create_session_navigation_layer()')
+        logger.info('in _create_session_navigation_up_down_layer()')
         return Layer(up_button=self._button_0,
                      down_button=self._button_5)
 
+
     def _create_session_navigation_left_right_layer(self):
-        logger.info('in _create_session_navigation_layer()')
+        logger.info('in _create_session_navigation_left_right_layer()')
         return Layer(left_button=self._button_8,
                      right_button=self._button_9)
      
@@ -241,7 +283,8 @@ class AAA(ControlSurface):
         logger.info('in _create_device_navigation_layer()')
         return Layer(prev_button=self._button_8,
                      next_button=self._button_9)
-    
+
+
     def _create_device_navigation_on_off_layer(self):
         logger.info('in _create_device_navigation_on_off_layer()')
         return Layer(on_off_control_1=self._button_1,
@@ -249,6 +292,7 @@ class AAA(ControlSurface):
                      on_off_control_3=self._button_3,
                      on_off_control_4=self._button_4,
                     )
+
 
     def _create_device_parameter_layer(self):
         logger.info('in _create_device_parameter_layer()')
@@ -281,17 +325,17 @@ class AAA(ControlSurface):
 
     def _create_mute_layer(self):
         logger.info('in _create_mute_layer()')
-        return Layer(mute_buttons=self.clip_launch_matrix)
+        return Layer(mute_buttons=self.horizontal_clip_launch_matrix)
 
 
     def _create_solo_layer(self):
         logger.info('in _create_solo_layer()')
-        return Layer(solo_buttons=self.clip_launch_matrix)
+        return Layer(solo_buttons=self.horizontal_clip_launch_matrix)
 
 
     def _create_arm_layer(self):
         logger.info('in _create_arm_layer()')
-        return Layer(arm_buttons=self.clip_launch_matrix)
+        return Layer(arm_buttons=self.horizontal_clip_launch_matrix)
 
 
     def _create_view_control(self):
@@ -451,9 +495,26 @@ class AAA(ControlSurface):
 
     @listens('selected_mode')
     def __on_session_mode_changed(self, selected_mode):
-        logger.info('_on_mute_mode_changed(): mode = {}'.format(selected_mode))
+        logger.info('__on_session_mode_changed(): mode = {}'.format(selected_mode))
         self.show_message('FCB1010 {} Mode'.format(selected_mode))
         self.fcb1010_display_mode(selected_mode)
+        if selected_mode in ['chan_strip', 'dev']:
+            logger.info('__on_session_mode_changed(): mode = {}\n\tchanging to channel_session_ring'.format(selected_mode))
+            # self._horizontal_session_ring.set_enabled(False)
+            # self._vertical_session_ring.set_enabled(False)
+            # self._session.session_ring = self._vertical_session_ring
+            # self._mixer.tracks_provider = self._vertical_session_ring
+            # self._session_navigation._session_ring = self._vertical_session_ring
+            # self._vertical_session_ring.set_enabled(True)
+        else:
+            logger.info('__on_session_mode_changed(): mode = {}\n\tchanging to _session_ring'.format(selected_mode))
+            # self._horizontal_session_ring.set_enabled(False)
+            # self._vertical_session_ring.set_enabled(False)
+            # self._session.session_ring = self._horizontal_session_ring
+            # self._mixer.tracks_provider = self._horizontal_session_ring
+            # self._session_navigation._session_ring = self._horizontal_session_ring
+            # self._horizontal_session_ring.set_enabled(True)
+
 
     def update(self):
         super(AAA, self).update()
