@@ -118,7 +118,7 @@ class AAA(ControlSurface):
         self._session_modes = MyModesComponent(name='Session_Modes',
           is_enabled=False,
           support_momentary_mode_cycling=True,
-          layer=Layer(cycle_mode_button=(self._button_down),cycle_up_mode_button=(self._button_up)))
+          layer=Layer(cycle_mode_button=(self._button_0)))
         self._session_modes.add_mode('launch', ( 
               EnablingMode((self._horizontal_session_ring)),
               AddLayerMode((self._session), layer=self._create_session_layer()),
@@ -127,11 +127,11 @@ class AAA(ControlSurface):
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('dev', (
-              EnablingMode((self._vertical_session_ring)),
+            #   EnablingMode((self._vertical_session_ring)),
               AddLayerMode((self._device_parameters), layer=self._create_device_parameter_layer()),
               AddLayerMode((self._device_navigation), layer=self._create_device_navigation_layer()),
               AddLayerMode((self._device_navigation), layer=self._create_device_navigation_on_off_layer()),
-              AddLayerMode(( self._vertical_session_navigation), layer=self._create_session_navigation_layer())
+            #   AddLayerMode(( self._vertical_session_navigation), layer=self._create_session_navigation_layer())
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('mute', ( 
@@ -246,25 +246,24 @@ class AAA(ControlSurface):
 
     def _create_session_layer(self):
         logger.info('in _create_session_layer()')
-        # return Layer(clip_launch_buttons=self.vertical_clip_launch_matrix)
         return Layer(clip_launch_buttons=self.horizontal_clip_launch_matrix)
 
 
     def _create_session_navigation_layer(self):
         logger.info('in _create_session_navigation_layer()')
         return Layer(
-        #   up_button=self._button_0,
-        #   down_button=self._button_5,
-          up_down_button=self._button_0,
-        #   left_button=self._button_8,
-        #   right_button=self._button_9,
-          left_right_button=self._button_9,
+          up_button=self._button_up,
+          down_button=self._button_down,
+        #   up_down_button=self._button_0,
+          left_button=self._button_8,
+          right_button=self._button_9,
+        #   left_right_button=self._button_9,
           )
 
     def _create_session_navigation_up_down_layer(self):
         logger.info('in _create_session_navigation_up_down_layer()')
-        return Layer(up_button=self._button_0,
-                     down_button=self._button_5)
+        return Layer(up_button=self._button_up,
+                     down_button=self._button_down)
 
 
     def _create_session_navigation_left_right_layer(self):
