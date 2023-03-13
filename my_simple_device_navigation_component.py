@@ -37,12 +37,15 @@ class MySimpleDeviceNavigationComponent(Component):
     on_off_control_3 = MyMappedSwitchControl(color='Device.Off', on_color='Device.On')
     on_off_control_4 = MyMappedSwitchControl(color='Device.Off', on_color='Device.On')
 
-    def __init__(self, *args, **keywords):
+    def __init__(self, *args, device_component=None, **keywords):
         logger.info('in __init()__')
         (super(MySimpleDeviceNavigationComponent, self).__init__)(*args, **keywords)
         self._chain = []
         self._on_off_controls = [self.on_off_control_1, self.on_off_control_2, self.on_off_control_3, self.on_off_control_4]
         self._MySimpleDeviceNavigationComponent__on_selected_track_changed.subject = self.song.view
+        # self._device_component = device_component
+        # self._MySimpleDeviceNavigationComponent__on_device_changed.subject = device_component
+
 
 
     @next_button.pressed
@@ -90,11 +93,6 @@ class MySimpleDeviceNavigationComponent(Component):
         logger.info('in _current_track()')
         return self.song.view.selected_track
 
-    """#TODO: when a track is changed we need to attach the on/off button matrix to 
-    the devices in the chain.
-    1. discover chain
-    2. release existing devices and buttons/controls
-    3. connect the devices in the chain to the on/off buttons/controls"""
     def _update_selected_track(self):
         logger.info('in _update_selected_track()')
         self._selected_track = self.song.view.selected_track
@@ -147,6 +145,11 @@ class MySimpleDeviceNavigationComponent(Component):
                         parameter = on_off_parameter(device)
                         if liveobj_valid(parameter):
                                 control.mapped_parameter = parameter
+
+    @listens('device')
+    def __on_device_changed(self):
+        logger.debug('__on_device_changed()')
+        pass
 
     # @listens('selected_device')
     # def _device_selection_in_track_changed(self):

@@ -30,6 +30,9 @@ import pprint
 
 """ Here we define some global variables """
 CHANNEL = 0 # Channels are numbered 0 through 15, this script only makes use of one MIDI Channel (Channel 1)
+PEDAL_MODE_NAME = 'Pedal_Modes'
+PEDAL_MODE_LAUNCH_MODE_NAME = 'pedal_launch'
+PEDAL_MODE_TRACK_MODE_NAME = 'track_launch'
 
 @depends(skin=None)
 def create_button(identifier, name, channel=CHANNEL, skin=None):
@@ -44,17 +47,25 @@ class AAA(ControlSurface):
 
     def __init__(self, *args, **kwargs):
         (super(AAA, self).__init__)(*args, **kwargs)
+        self._current_pedal_mode = ''
+        self._current_session_mode = ''
+        self._current_track_mode = ''
+
         with self.component_guard():
             with inject(skin=(const(skin))).everywhere():
                 self._create_controls()
         with self.component_guard():
             self._create_session()
+            self._create_vertical_session()
             self._create_view_control()
             self._create_mixer()
             self._create_transport()
             self._create_device_parameters()
             self._create_device_navigation()
-            self._create_session_modes()
+            # self._create_session_modes()
+            self._create_track_modes()
+            # self._create_pedal_modes()
+
 
         """ Here is some Live API stuff just for fun """
         app = Live.Application.get_application() # get a handle to the App
@@ -62,6 +73,8 @@ class AAA(ControlSurface):
         min = app.get_minor_version() # get the minor version from the App
         bug = app.get_bugfix_version() # get the bugfix version from the App
         self.show_message(str(maj) + "." + str(min) + "." + str(bug)) #put them together and use the ControlSurface show_message method to output version info to console
+
+        self.fcb1010_display_modes()
 
         logger.info('Completed init')
 
@@ -111,6 +124,34 @@ class AAA(ControlSurface):
         # self._session_recording.layer = Layer(record_button=(self._record_button),
         #     record_stop_button=(self._record_stop_button))
 
+    def _create_pedal_modes(self):
+        logger.info('in _create_pedal_modes()')
+
+        self._pedal_modes = MyModesComponent(name=PEDAL_MODE_NAME,
+          is_enabled=False,
+          support_momentary_mode_cycling=True,
+          layer=Layer(cycle_mode_button=(self._button_0)))
+
+        self._pedal_modes.add_mode(PEDAL_MODE_LAUNCH_MODE_NAME, (
+            EnablingMode((self._horizontal_session_ring)),
+            AddLayerMode((self._session_modes), layer=Layer(cycle_mode_button=(self._button_5))),
+            # EnablingMode((self._session_modes)),
+            # LayerMode((self._track_modes), None),
+          ),
+          behaviour=(MomentaryBehaviour())
+        ),
+        self._pedal_modes.add_mode(PEDAL_MODE_TRACK_MODE_NAME, (
+            EnablingMode((self._vertical_session_ring)),
+            AddLayerMode((self._track_modes), layer=Layer(cycle_mode_button=(self._button_5))),
+            # EnablingMode((self._track_modes)),
+            # LayerMode((self._session_modes), None),
+          ),
+          behaviour=(MomentaryBehaviour())
+        )
+        self._pedal_modes.selected_mode = PEDAL_MODE_LAUNCH_MODE_NAME
+        self._current_pedal_mode = self._pedal_modes.selected_mode
+        self._pedal_modes.set_enabled(True)
+        self._AAA__on_pedal_mode_changed.subject = self._pedal_modes
 
     def _create_session_modes(self):
         logger.info('in _create_session_modes()')
@@ -118,72 +159,94 @@ class AAA(ControlSurface):
         self._session_modes = MyModesComponent(name='Session_Modes',
           is_enabled=False,
           support_momentary_mode_cycling=True,
-          layer=Layer(cycle_mode_button=(self._button_0)))
+          layer=Layer(cycle_mode_button=(self._button_5)))
         self._session_modes.add_mode('launch', ( 
               EnablingMode((self._horizontal_session_ring)),
               AddLayerMode((self._session), layer=self._create_session_layer()),
               AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
-              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_layer())
-            ),
-            behaviour=(MomentaryBehaviour()) )
-        self._session_modes.add_mode('dev', (
-            #   EnablingMode((self._vertical_session_ring)),
-              AddLayerMode((self._device_parameters), layer=self._create_device_parameter_layer()),
-              AddLayerMode((self._device_navigation), layer=self._create_device_navigation_layer()),
-              AddLayerMode((self._device_navigation), layer=self._create_device_navigation_on_off_layer()),
-            #   AddLayerMode(( self._vertical_session_navigation), layer=self._create_session_navigation_layer())
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_up_down_layer()),
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_left_right_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('mute', ( 
               EnablingMode((self._horizontal_session_ring)),
               AddLayerMode((self._mixer), layer=self._create_mute_layer()), 
               AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
-              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_layer())
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_up_down_layer()),
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_left_right_layer()),
             ),
             behaviour=(MomentaryBehaviour())  )
         self._session_modes.add_mode('solo', ( 
               EnablingMode((self._horizontal_session_ring)),
               AddLayerMode((self._mixer), layer=self._create_solo_layer()),
               AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
-              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_layer()),
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_up_down_layer()),
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_left_right_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('arm', (
               EnablingMode((self._horizontal_session_ring)),
               AddLayerMode((self._mixer), layer=self._create_arm_layer()),
               AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
-              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_layer()),
-            ),
-            behaviour=(MomentaryBehaviour()) )
-        self._session_modes.add_mode('chan_strip', (
-              EnablingMode((self._vertical_session_ring)),
-              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_buttons_layer()),
-              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
-              AddLayerMode(( self._vertical_session_navigation), layer=self._create_session_navigation_layer())
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_up_down_layer()),
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_left_right_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('transport', (
             #   EnablingMode((self._horizontal_session_ring)),
               AddLayerMode((self._transport), layer=self._create_transport_control_layer()),
-              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_layer())
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_up_down_layer()),
+              AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_left_right_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.selected_mode = 'launch'
-        self.fcb1010_display_mode('launch')
+        self._current_session_mode = self._session_modes.selected_mode
         self._session_modes.set_enabled(True)
         self._AAA__on_session_mode_changed.subject = self._session_modes
 
-        # device_layer_mode = LayerMode(self._device, Layer(parameter_controls=(self._encoders)))
-        # device_navigation_layer_mode = LayerMode(self._device_navigation, Layer(device_nav_right_button=(self._forward_button),
-        #   device_nav_left_button=(self._backward_button)))
-        # self._encoder_modes.add_mode('device_mode', [device_layer_mode, device_navigation_layer_mode])
+
+    def _create_track_modes(self):
+        logger.info('in _create_track_modes()')
+
+        self._track_modes = MyModesComponent(name='Track_Modes',
+          is_enabled=False,
+          support_momentary_mode_cycling=True,
+          layer=Layer(cycle_mode_button=(self._button_5)))
+        self._track_modes.add_mode('launch', ( 
+              EnablingMode((self._vertical_session_ring)),
+              AddLayerMode((self._vertical_session), layer=self._create_vertical_session_layer()),
+              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
+              AddLayerMode(( self._vertical_session_navigation), layer=self._create_session_navigation_up_down_layer()),
+              AddLayerMode(( self._vertical_session_navigation), layer=self._create_session_navigation_left_right_layer()),
+            ),
+            behaviour=(MomentaryBehaviour()) )
+        self._track_modes.add_mode('dev', (
+              EnablingMode((self._vertical_session_ring)),
+              AddLayerMode((self._device_parameters), layer=self._create_device_parameter_layer()),
+              AddLayerMode((self._device_navigation), layer=self._create_device_navigation_layer()),
+              AddLayerMode((self._device_navigation), layer=self._create_device_navigation_on_off_layer()),
+              AddLayerMode(( self._vertical_session_navigation), layer=self._create_session_navigation_up_down_layer()),
+            #   AddLayerMode(( self._horizontal_session_navigation), layer=self._create_session_navigation_left_right_layer()),
+            ),
+            behaviour=(MomentaryBehaviour()) )
+        self._track_modes.add_mode('chan_strip', (
+              EnablingMode((self._vertical_session_ring)),
+              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_buttons_layer()),
+              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
+              AddLayerMode(( self._vertical_session_navigation), layer=self._create_session_navigation_up_down_layer()),
+              AddLayerMode(( self._vertical_session_navigation), layer=self._create_session_navigation_left_right_layer()),
+            ),
+            behaviour=(MomentaryBehaviour()) )
+        self._track_modes.selected_mode = 'launch'
+        self._current_track_mode = self._track_modes.selected_mode
+        self._track_modes.set_enabled(True)
+        self._AAA__on_track_mode_changed.subject = self._track_modes
 
 
     def _create_mixer(self):
         logger.info('in _create_mixer()')
         self._mixer = MixerComponent(name='Mixer',
           auto_name=True,
-        #   tracks_provider=(self._vertical_session_ring),
           tracks_provider=(self._horizontal_session_ring),
           track_assigner=(SimpleTrackAssigner()),
           invert_mute_feedback=True,
@@ -201,52 +264,72 @@ class AAA(ControlSurface):
     def _create_device_navigation(self, device_component=None):
         logger.info('in _create_device_navigation()')
         self._device_navigation = MySimpleDeviceNavigationComponent(name='Device_Navigation',
+        #   device_component=self._device_parameters,
           layer=self._create_device_navigation_layer())
 
 
     def _create_session(self):
         logger.info('in _create_session()')
-        self.create_session_rings()
-        self._session = MySessionComponent(name='Session',
-          is_enabled=False,
-          session_ring=(self._horizontal_session_ring))
-        self._session.set_enabled(True)
-        self.create_session_navigations()
-
-        self._horizontal_session_navigation.set_enabled(True)
-        self._horizontal_session_ring.set_enabled(True)
-        self._vertical_session_navigation.set_enabled(True)
-        self._vertical_session_ring.set_enabled(False)
-
-
-    def create_session_rings(self):
         self._horizontal_session_ring = SessionRingComponent(name='Horizontal_Session_Ring',
           is_enabled=False,
           num_tracks=SESSION_WIDTH,
           num_scenes=SESSION_HEIGHT)
-        self._vertical_session_ring = SessionRingComponent(name='Vertial_Session_Ring',
+        self._session = MySessionComponent(name='Session',
+          is_enabled=False,
+          session_ring=(self._horizontal_session_ring))
+        self._session.set_enabled(True)
+        self._horizontal_session_navigation = MySessionNavigationComponent(name='Horizontal_Session_Navigation',
+          is_enabled=False,
+          session_ring=(self._horizontal_session_ring))
+        self._horizontal_session_navigation.set_enabled(True)
+        self._horizontal_session_ring.set_enabled(False)
+
+
+    def _create_vertical_session(self):
+        logger.info('in _create_vertical_session()')
+        self._vertical_session_ring = SessionRingComponent(name='Vertical_Session_Ring',
           is_enabled=False,
           num_tracks=SESSION_HEIGHT,
           num_scenes=SESSION_WIDTH)
+        self._vertical_session = MySessionComponent(name='Vertical_Session',
+          is_enabled=False,
+          session_ring=(self._vertical_session_ring))
+        self._vertical_session.set_enabled(True)
+        self._vertical_session_navigation = MySessionNavigationComponent(name='Vertical_Session_Navigation',
+          is_enabled=False,
+          session_ring=(self._vertical_session_ring))
+
+        self._vertical_session_navigation.set_enabled(True)
+        self._vertical_session_ring.set_enabled(True)
+
+
+    def _create_horizontal_session_ring(self):
+        self._horizontal_session_ring = SessionRingComponent(name='Horizontal_Session_Ring',
+          is_enabled=False,
+          num_tracks=SESSION_WIDTH,
+          num_scenes=SESSION_HEIGHT)
     
+    def _create_vertical_session_ring(self):
+        self._vertical_session_ring = SessionRingComponent(name='Vertical_Session_Ring',
+          is_enabled=False,
+          num_tracks=SESSION_HEIGHT,
+          num_scenes=SESSION_WIDTH)
+
     def get_horizontal_ring_offsets(self):
         return (self._horizontal_session_ring.track_offset, self._horizontal_session_ring.scene_offset)
 
     def get_vertical_ring_offsets(self):
         return (self._vertical_session_ring.track_offset, self._vertical_session_ring.scene_offset)
 
-    def create_session_navigations(self):
-        self._horizontal_session_navigation = MySessionNavigationComponent(name='Horizontal_Session_Navigation',
-          is_enabled=False,
-          session_ring=(self._horizontal_session_ring))
-        self._vertical_session_navigation = MySessionNavigationComponent(name='Vertical_Session_Navigation',
-          is_enabled=False,
-          session_ring=(self._vertical_session_ring))
-
 
     def _create_session_layer(self):
         logger.info('in _create_session_layer()')
         return Layer(clip_launch_buttons=self.horizontal_clip_launch_matrix)
+
+
+    def _create_vertical_session_layer(self):
+        logger.info('in _create_vertical_session_layer()')
+        return Layer(clip_launch_buttons=self.vertical_clip_launch_matrix)
 
 
     def _create_session_navigation_layer(self):
@@ -356,7 +439,46 @@ class AAA(ControlSurface):
         name=('{}_Displays'.format(name)))
 
 
+    def fcb1010_display_modes(self):
+        logger.info('in fcb1010_display_modes()')
+        DISPLAY_1_CC = 109
+        DISPLAY_2_CC = 110
+        ASCII_LOOKUP = {'A':  0, 'B':  1, 'C':  2, 'D':  3, 'E':  4, 'F':  5, 
+                        'G':  6, 'H':  7, 'I':  8, 'J':  9, 'K': 10, 'L': 11,
+                        'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17,
+                        'S': 18, 'T': 19, 'U': 20, 'V': 21, 'W': 22, 'X': 23,
+                        'Y': 24, 'Z': 25, ' ': 27 }
+        MODE_LOOKUP = {'arm': 'A', 'solo': 'S', 'launch': 'L',
+                       'mute': 'M', 'chan_strip': 'C', 'transport': 'T',
+                       'dev': 'D', PEDAL_MODE_LAUNCH_MODE_NAME: 'L', PEDAL_MODE_TRACK_MODE_NAME: 'T'}
+
+        left_led_char = MODE_LOOKUP.get(self._current_pedal_mode, ' ')
+        if self._current_pedal_mode == PEDAL_MODE_LAUNCH_MODE_NAME:
+            right_led_char = MODE_LOOKUP.get(self._current_session_mode, ' ')
+        else:
+            right_led_char = MODE_LOOKUP.get(self._current_track_mode, ' ')
+
+        logger.info('midi message, chars: {} {}, value: '.format(left_led_char, right_led_char))
+        midi_msg_1 = (CC_STATUS + CHANNEL, DISPLAY_1_CC, ASCII_LOOKUP.get(left_led_char, 27))
+        midi_msg_2 = (CC_STATUS + CHANNEL, DISPLAY_2_CC, ASCII_LOOKUP.get(right_led_char, 27))
+        midi_clear_1 = (CC_STATUS + CHANNEL, DISPLAY_1_CC, 27)
+        midi_clear_2 = (CC_STATUS + CHANNEL, DISPLAY_2_CC, 27)
+        midi_pp_1 = midi.pretty_print_bytes(midi_msg_1)
+        logger.info('midi message, mode: {}, value: '.format(self._current_pedal_mode) + midi_pp_1)
+        midi_pp_2 = midi.pretty_print_bytes(midi_msg_2)
+        logger.info('midi message, mode: {}, value: '.format(self._current_session_mode) + midi_pp_2)
+        logger.info('midi message, mode: {}, value: '.format(self._current_track_mode) + midi_pp_2)
+        self._do_send_midi(midi_clear_1)
+        time.sleep(0.05)
+        self._do_send_midi(midi_clear_2)
+        time.sleep(0.05)
+        self._do_send_midi(midi_msg_1)
+        time.sleep(0.05)
+        self._do_send_midi(midi_msg_2)
+
+
     def fcb1010_display_mode(self, mode):
+        logger.info('in fcb1010_display_mode()')
         DISPLAY_1_CC = 109
         DISPLAY_2_CC = 110
         ASCII_LOOKUP = {'A':  0, 'B':  1, 'C':  2, 'D':  3, 'E':  4, 'F':  5, 
@@ -493,26 +615,25 @@ class AAA(ControlSurface):
 
 
     @listens('selected_mode')
+    def __on_pedal_mode_changed(self, selected_mode):
+        logger.info('__on_pedal_mode_changed(): mode = {}'.format(selected_mode))
+        if selected_mode != None:
+            self._current_pedal_mode = selected_mode
+            self.fcb1010_display_modes()
+
+    @listens('selected_mode')
     def __on_session_mode_changed(self, selected_mode):
         logger.info('__on_session_mode_changed(): mode = {}'.format(selected_mode))
-        self.show_message('FCB1010 {} Mode'.format(selected_mode))
-        self.fcb1010_display_mode(selected_mode)
-        if selected_mode in ['chan_strip', 'dev']:
-            logger.info('__on_session_mode_changed(): mode = {}\n\tchanging to channel_session_ring'.format(selected_mode))
-            # self._horizontal_session_ring.set_enabled(False)
-            # self._vertical_session_ring.set_enabled(False)
-            # self._session.session_ring = self._vertical_session_ring
-            # self._mixer.tracks_provider = self._vertical_session_ring
-            # self._session_navigation._session_ring = self._vertical_session_ring
-            # self._vertical_session_ring.set_enabled(True)
-        else:
-            logger.info('__on_session_mode_changed(): mode = {}\n\tchanging to _session_ring'.format(selected_mode))
-            # self._horizontal_session_ring.set_enabled(False)
-            # self._vertical_session_ring.set_enabled(False)
-            # self._session.session_ring = self._horizontal_session_ring
-            # self._mixer.tracks_provider = self._horizontal_session_ring
-            # self._session_navigation._session_ring = self._horizontal_session_ring
-            # self._horizontal_session_ring.set_enabled(True)
+        if selected_mode != None:
+            self._current_session_mode = selected_mode
+            self.fcb1010_display_modes()
+
+    @listens('selected_mode')
+    def __on_track_mode_changed(self, selected_mode):
+        logger.info('__on_track_mode_changed(): mode = {}'.format(selected_mode))
+        if selected_mode != None:
+            self._current_track_mode = selected_mode
+            self.fcb1010_display_modes()
 
 
     def update(self):
