@@ -62,8 +62,8 @@ class AAA(ControlSurface):
             self._create_transport()
             self._create_device_parameters()
             self._create_device_navigation()
-            # self._create_session_modes()
-            self._create_track_modes()
+            self._create_session_modes()
+            # self._create_track_modes()
             # self._create_pedal_modes()
 
 
@@ -201,6 +201,9 @@ class AAA(ControlSurface):
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.selected_mode = 'launch'
         self._current_session_mode = self._session_modes.selected_mode
+
+        self._current_pedal_mode = PEDAL_MODE_LAUNCH_MODE_NAME
+
         self._session_modes.set_enabled(True)
         self._AAA__on_session_mode_changed.subject = self._session_modes
 
@@ -282,7 +285,7 @@ class AAA(ControlSurface):
           is_enabled=False,
           session_ring=(self._horizontal_session_ring))
         self._horizontal_session_navigation.set_enabled(True)
-        self._horizontal_session_ring.set_enabled(False)
+        self._horizontal_session_ring.set_enabled(True)
 
 
     def _create_vertical_session(self):
@@ -300,7 +303,7 @@ class AAA(ControlSurface):
           session_ring=(self._vertical_session_ring))
 
         self._vertical_session_navigation.set_enabled(True)
-        self._vertical_session_ring.set_enabled(True)
+        self._vertical_session_ring.set_enabled(False)
 
 
     def _create_horizontal_session_ring(self):
