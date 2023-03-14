@@ -44,6 +44,10 @@ class AAA(ControlSurface):
 
     def __init__(self, *args, **kwargs):
         (super(AAA, self).__init__)(*args, **kwargs)
+        
+        self._bottom_row_mode = None
+        self._session_mode = None
+
         with self.component_guard():
             with inject(skin=(const(skin))).everywhere():
                 self._create_controls()
@@ -141,7 +145,7 @@ class AAA(ControlSurface):
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.selected_mode = 'launch'
-        self.fcb1010_display_mode('launch')
+        self.fcb1010_display_modes()
         self._session_modes.set_enabled(True)
         self._AAA__on_session_mode_changed.subject = self._session_modes
 
@@ -198,7 +202,7 @@ class AAA(ControlSurface):
             ),
             behaviour=(ImmediateBehaviour()) )
         self._bottom_row_modes.selected_mode = 'br_launch'
-        # self.fcb1010_display_mode('launch')
+        # self.fcb1010_display_modes()
         self._bottom_row_modes.set_enabled(True)
         self._AAA__on_bottom_row_modes_changed.subject = self._bottom_row_modes
 
@@ -371,6 +375,40 @@ class AAA(ControlSurface):
         name=('{}_Displays'.format(name)))
 
 
+    def fcb1010_display_modes(self):
+        DISPLAY_1_CC = 109
+        DISPLAY_2_CC = 110
+        ASCII_LOOKUP = {'A':  0, 'B':  1, 'C':  2, 'D':  3, 'E':  4, 'F':  5, 
+                        'G':  6, 'H':  7, 'I':  8, 'J':  9, 'K': 10, 'L': 11,
+                        'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17,
+                        'S': 18, 'T': 19, 'U': 20, 'V': 21, 'W': 22, 'X': 23,
+                        'Y': 24, 'Z': 25, ' ': 27 }
+        MODE_LOOKUP = {'br_arm': 'A', 'br_solo': 'S', 'br_launch': 'L', 'br_mute': 'M', 'br_chan_strip': 'C',
+                       'br_transport': 'T', 'br_dev': 'D', 'launch': 'L', 'dev': 'D', 'chan_strip': 'C',
+                      }
+
+        main_mode_char = MODE_LOOKUP.get(self._session_mode, ' ')
+        sub_mode_char = MODE_LOOKUP.get(self._bottom_row_mode, ' ')
+
+        logger.debug('midi message, chars: {} {}, value: '.format(main_mode_char, sub_mode_char))
+        midi_msg_1 = (CC_STATUS + CHANNEL, DISPLAY_1_CC, ASCII_LOOKUP.get(main_mode_char, 27))
+        midi_msg_2 = (CC_STATUS + CHANNEL, DISPLAY_2_CC, ASCII_LOOKUP.get(sub_mode_char, 27))
+        midi_clear_1 = (CC_STATUS + CHANNEL, DISPLAY_1_CC, 27)
+        midi_clear_2 = (CC_STATUS + CHANNEL, DISPLAY_2_CC, 27)
+        midi_pp_1 = midi.pretty_print_bytes(midi_msg_1)
+        logger.debug('midi message, mode: {}, value: '.format(self._session_mode) + midi_pp_1)
+        midi_pp_2 = midi.pretty_print_bytes(midi_msg_2)
+        logger.debug('midi message, mode: {}, value: '.format(self._bottom_row_mode) + midi_pp_2)
+        self._do_send_midi(midi_clear_1)
+        time.sleep(0.05)
+        self._do_send_midi(midi_clear_2)
+        time.sleep(0.05)
+        self._do_send_midi(midi_msg_1)
+        time.sleep(0.05)
+        self._do_send_midi(midi_msg_2)
+        time.sleep(0.05)
+
+
     def fcb1010_display_mode(self, mode):
         DISPLAY_1_CC = 109
         DISPLAY_2_CC = 110
@@ -509,15 +547,15 @@ class AAA(ControlSurface):
 
     @listens('selected_mode')
     def __on_session_mode_changed(self, selected_mode):
-        logger.info('_on_mute_mode_changed(): mode = {}'.format(selected_mode))
-        self.show_message('FCB1010 {} Mode'.format(selected_mode))
-        self.fcb1010_display_mode(selected_mode)
+        logger.info('__on_session_mode_changed(): mode = {}'.format(selected_mode))
+        self._session_mode = selected_mode
+        # self.fcb1010_display_modes()
 
     @listens('selected_mode')
     def __on_bottom_row_modes_changed(self, selected_mode):
         logger.info('__on_bottom_row_modes_changed(): mode = {}'.format(selected_mode))
-        # self.show_message('FCB1010 {} Mode'.format(selected_mode))
-        # self.fcb1010_display_mode(selected_mode)
+        self._bottom_row_mode = selected_mode
+        self.fcb1010_display_modes()
 
     def update(self):
         super(AAA, self).update()
