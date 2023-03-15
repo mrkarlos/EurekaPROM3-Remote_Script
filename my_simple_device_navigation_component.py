@@ -12,7 +12,6 @@ from .my_switch_control import MySwitchControl, MyMappedSwitchControl
 from .my_live_api_utils import release_control, collect_devices
 
 logger = logging.getLogger(__name__)
-import pprint
 
 DEVICE_SLOTS = 4
 NavDirection = Live.Application.Application.View.NavDirection
@@ -43,6 +42,16 @@ class MySimpleDeviceNavigationComponent(Component):
         self._chain = []
         self._on_off_controls = [self.on_off_control_1, self.on_off_control_2, self.on_off_control_3, self.on_off_control_4]
         self._MySimpleDeviceNavigationComponent__on_selected_track_changed.subject = self.song.view
+
+
+    def set_device_on_off_buttons(self, buttons):
+        logger.info('in set_device_on_off_buttons()')
+        if buttons:
+            for button, idx in zip(buttons, range(1, DEVICE_SLOTS)):
+                control_name = 'on_off_control_{}'.format(idx)
+                logger.info('in set_device_on_off_buttons(), setting control element for: {}'.format(control_name))
+                control = getattr(self, control_name)
+                control.set_control_element(button)
 
 
     @next_button.pressed

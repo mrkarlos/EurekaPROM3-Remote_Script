@@ -13,6 +13,7 @@ from ableton.v2.control_surface.control import ButtonControl
 from ableton.v2.control_surface.mode import LayerMode, AddLayerMode, EnablingMode, SetAttributeMode, ModesComponent, ImmediateBehaviour, MomentaryBehaviour, LatchingBehaviour
 
 from .my_button_element import MyButtonElement
+# from .blinking_button import BlinkingButtonControl
 from .my_modes_component import MyModesComponent
 from .my_session_component import MySessionComponent
 from .my_session_navigation_component import MySessionNavigationComponent
@@ -25,7 +26,6 @@ from .my_simple_device_navigation_component import MySimpleDeviceNavigationCompo
 from .simple_display import SimpleDisplayElement
 
 logger = logging.getLogger(__name__)
-import pprint
 
 
 """ Here we define some global variables """
@@ -69,11 +69,11 @@ class AAA(ControlSurface):
         bug = app.get_bugfix_version() # get the bugfix version from the App
         self.show_message(str(maj) + "." + str(min) + "." + str(bug)) #put them together and use the ControlSurface show_message method to output version info to console
 
-        logger.info('Completed init')
+        logger.debug('Completed init')
 
 
     def _create_controls(self):
-        logger.info('in _create_controls()')
+        logger.debug('in _create_controls()')
 
         is_momentary = True # We'll only be using momentary buttons here
 
@@ -111,7 +111,7 @@ class AAA(ControlSurface):
 
 
     def _create_transport(self):
-        logger.info('in _create_transport()')
+        logger.debug('in _create_transport()')
         self._transport = TransportComponent(name='Transport')
 
         # self._session_recording = SessionRecordingComponent(name='Session_Recording')
@@ -120,28 +120,30 @@ class AAA(ControlSurface):
 
 
     def _create_session_modes(self):
-        logger.info('in _create_session_modes()')
+        logger.debug('in _create_session_modes()')
 
         self._session_modes = MyModesComponent(name='Session_Modes',
           is_enabled=False,
           support_momentary_mode_cycling=True,
-          layer=Layer(cycle_mode_button=(self._button_down),cycle_up_mode_button=(self._button_up)))
+          layer=Layer(cycle_mode_button=(self._button_0)))
         self._session_modes.add_mode('launch', ( 
               EnablingMode((self._session_ring)),
-              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_launch'),
-              AddLayerMode((self._session_navigation), layer=self._create_session_navigation_layer()),
-              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
+              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_l_launch'),
+              LayerMode((self._session_navigation), layer=self._create_session_navigation_layer()),
+              LayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('dev', (
-              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_dev'),
-              AddLayerMode((self._device_parameters), layer=self._create_device_parameter_layer()),
-              AddLayerMode((self._device_navigation), layer=self._create_device_navigation_layer()),
+              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_d_dev'),
+              LayerMode((self._device_parameters), layer=self._create_device_parameter_layer()),
+              LayerMode((self._device_navigation), layer=self._create_device_navigation_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.add_mode('chan_strip', (
-              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_chan_strip'),
-              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
+              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_c_chan_strip'),
+              LayerMode((self._device_parameters), layer=self._create_device_parameter_layer()),
+              LayerMode((self._device_navigation), layer=self._create_device_navigation_layer()),
+              LayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
             ),
             behaviour=(MomentaryBehaviour()) )
         self._session_modes.selected_mode = 'launch'
@@ -163,53 +165,63 @@ class AAA(ControlSurface):
         #   layer=Layer(cycle_mode_button=(self._button_5))
           )
         self._bottom_row_modes.add_mode('custom', ( 
-              LayerMode((self._bottom_row_modes), layer=Layer(br_launch_button=self._button_5))
+              LayerMode((self._bottom_row_modes), layer=Layer(br_l_launch_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour()) )
-        self._bottom_row_modes.add_mode('br_launch', ( 
-              AddLayerMode((self._session), layer=self._create_session_layer()),
-              LayerMode((self._bottom_row_modes), layer=Layer(br_mute_button=self._button_5))
+        self._bottom_row_modes.add_mode('br_l_launch', ( 
+              LayerMode((self._session), layer=self._create_session_layer()),
+              LayerMode((self._bottom_row_modes), layer=Layer(br_l_mute_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour()) )
-        self._bottom_row_modes.add_mode('br_mute', ( 
-              AddLayerMode((self._mixer), layer=self._create_mute_layer()), 
-              LayerMode((self._bottom_row_modes), layer=Layer(br_solo_button=self._button_5))
+        self._bottom_row_modes.add_mode('br_l_mute', ( 
+              LayerMode((self._mixer), layer=self._create_mute_layer()), 
+              LayerMode((self._bottom_row_modes), layer=Layer(br_l_solo_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour())  )
-        self._bottom_row_modes.add_mode('br_solo', ( 
-              AddLayerMode((self._mixer), layer=self._create_solo_layer()),
-              LayerMode((self._bottom_row_modes), layer=Layer(br_arm_button=self._button_5))
+        self._bottom_row_modes.add_mode('br_l_solo', ( 
+              LayerMode((self._mixer), layer=self._create_solo_layer()),
+              LayerMode((self._bottom_row_modes), layer=Layer(br_l_arm_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour()) )
-        self._bottom_row_modes.add_mode('br_arm', (
-              AddLayerMode((self._mixer), layer=self._create_arm_layer()),
-              LayerMode((self._bottom_row_modes), layer=Layer(br_launch_button=self._button_5))
+        self._bottom_row_modes.add_mode('br_l_arm', (
+              LayerMode((self._mixer), layer=self._create_arm_layer()),
+              LayerMode((self._bottom_row_modes), layer=Layer(br_l_launch_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour()) )
-        self._bottom_row_modes.add_mode('br_chan_strip', (
+        self._bottom_row_modes.add_mode('br_c_chan_strip', (
               AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_buttons_layer()),
-              LayerMode((self._bottom_row_modes), layer=Layer(br_dev_button=self._button_5))
+              LayerMode((self._bottom_row_modes), layer=Layer(br_c_transport_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour()) )
-        self._bottom_row_modes.add_mode('br_dev', (
+        self._bottom_row_modes.add_mode('br_c_transport', (
+              LayerMode((self._transport), layer=self._create_transport_control_layer()),
+              LayerMode((self._bottom_row_modes), layer=Layer(br_c_chan_strip_button=self._button_5))
+            ),
+            behaviour=(ImmediateBehaviour()) )
+        self._bottom_row_modes.add_mode('br_d_dev', (
               AddLayerMode((self._device_navigation), layer=self._create_device_navigation_on_off_layer()),
-              LayerMode((self._bottom_row_modes), layer=Layer(br_transport_button=self._button_5))
+              LayerMode((self._bottom_row_modes), layer=Layer(br_d_chan_strip_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour()) )
-        self._bottom_row_modes.add_mode('br_transport', (
-              AddLayerMode((self._transport), layer=self._create_transport_control_layer()),
-              LayerMode((self._bottom_row_modes), layer=Layer(br_chan_strip_button=self._button_5))
+        self._bottom_row_modes.add_mode('br_d_chan_strip', (
+              AddLayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_buttons_layer()),
+              LayerMode((self._bottom_row_modes), layer=Layer(br_d_dev_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour()) )
-        self._bottom_row_modes.selected_mode = 'br_launch'
-        # self.fcb1010_display_modes()
+        self._bottom_row_modes.add_mode('br_tbd_transport', (
+              LayerMode((self._transport), layer=self._create_transport_control_layer()),
+              LayerMode((self._bottom_row_modes), layer=Layer(br_c_chan_strip_button=self._button_5))
+            ),
+            behaviour=(ImmediateBehaviour()) )
+        self._bottom_row_modes.selected_mode = 'br_l_launch'
+        self.fcb1010_display_modes()
         self._bottom_row_modes.set_enabled(True)
         self._AAA__on_bottom_row_modes_changed.subject = self._bottom_row_modes
 
 
 
     def _create_mixer(self):
-        logger.info('in _create_mixer()')
+        logger.debug('in _create_mixer()')
         self._mixer = MixerComponent(name='Mixer',
           auto_name=True,
           tracks_provider=(self._session_ring),
@@ -219,7 +231,7 @@ class AAA(ControlSurface):
 
 
     def _create_device_parameters(self):
-        logger.info('in _create_device_parameters()')
+        logger.debug('in _create_device_parameters()')
         self._device_parameters = MySimpleDeviceParameterComponent(name='Device',
           is_enabled=False,
           layer=self._create_device_parameter_layer())
@@ -227,13 +239,13 @@ class AAA(ControlSurface):
 
 
     def _create_device_navigation(self, device_component=None):
-        logger.info('in _create_device_navigation()')
+        logger.debug('in _create_device_navigation()')
         self._device_navigation = MySimpleDeviceNavigationComponent(name='Device_Navigation',
           layer=self._create_device_navigation_layer())
 
 
     def _create_session(self):
-        logger.info('in _create_session()')
+        logger.debug('in _create_session()')
         self._session_ring = SessionRingComponent(name='Session_Ring',
           is_enabled=True,
           num_tracks=SESSION_WIDTH,
@@ -243,8 +255,9 @@ class AAA(ControlSurface):
           session_ring=(self._session_ring))
         self._session_navigation = MySessionNavigationComponent(name='Session_Navigation',
           is_enabled=False,
+        #   layer=(self._create_session_navigation_layer()),
           session_ring=(self._session_ring),
-          layer=(self._create_session_navigation_layer()))
+        )
         self._session.set_enabled(True)
         self._session_navigation.set_enabled(True)
 
@@ -264,48 +277,50 @@ class AAA(ControlSurface):
         self._vertical_session.set_enabled(True)
 
     def _create_session_layer(self):
-        logger.info('in _create_session_layer()')
+        logger.debug('in _create_session_layer()')
         return Layer(clip_launch_buttons=self.clip_launch_matrix)
 
     def _create_vertical_session_layer(self):
-        logger.info('in _create_vertical_session_layer()')
+        logger.debug('in _create_vertical_session_layer()')
         return Layer(clip_launch_buttons=self.clip_launch_vertical_matrix)
 
     def _create_session_navigation_layer(self):
-        logger.info('in _create_session_navigation_layer()')
+        logger.debug('in _create_session_navigation_layer()')
         return Layer(
-        #   up_button=self._button_0,
-        #   down_button=self._button_5,
-          up_down_button=self._button_0,
-        #   left_button=self._button_8,
-        #   right_button=self._button_9,
-          left_right_button=self._button_9,
+          up_button=self._button_6,
+          down_button=self._button_7,
+        #   up_down_button=self._button_6,
+          left_button=self._button_8,
+          right_button=self._button_9,
+        #   left_right_button=self._button_7,
           )
 
+# TODO: change buttons
     def _create_session_navigation_up_down_layer(self):
-        logger.info('in _create_session_navigation_layer()')
-        return Layer(up_button=self._button_0,
-                     down_button=self._button_5)
+        logger.debug('in _create_session_navigation_up_down_layer()')
+        return Layer(up_button=self._button_6,
+                     down_button=self._button_7)
 
     def _create_session_navigation_left_right_layer(self):
-        logger.info('in _create_session_navigation_layer()')
-        return Layer(left_button=self._button_8,
-                     right_button=self._button_9)
+        logger.debug('in _create_session_navigation_left_right_layer()')
+        return Layer(left_button=self._button_6,
+                     right_button=self._button_7)
      
 
     def _create_track_navigation_layer(self):
-        logger.info('in _create_track_navigation_layer()')
-        return Layer(prev_track_button=self._button_6,
-                     next_track_button=self._button_7)
+        logger.debug('in _create_track_navigation_layer()')
+        return Layer(prev_track_button=self._button_up,
+                     next_track_button=self._button_down)
 
 
     def _create_device_navigation_layer(self):
-        logger.info('in _create_device_navigation_layer()')
+        logger.debug('in _create_device_navigation_layer()') 
         return Layer(prev_button=self._button_8,
                      next_button=self._button_9)
     
     def _create_device_navigation_on_off_layer(self):
         logger.info('in _create_device_navigation_on_off_layer()')
+        # return Layer(device_on_off_buttons=self.device_on_off_buttons)
         return Layer(on_off_control_1=self._button_1,
                      on_off_control_2=self._button_2,
                      on_off_control_3=self._button_3,
@@ -313,12 +328,12 @@ class AAA(ControlSurface):
                     )
 
     def _create_device_parameter_layer(self):
-        logger.info('in _create_device_parameter_layer()')
+        logger.debug('in _create_device_parameter_layer()')
         return Layer(parameter_controls=self.device_parameter_controls)
 
 
     def _create_channel_strip_buttons_layer(self):
-        logger.info('in _create_channel_strip_buttons_layer()')
+        logger.debug('in _create_channel_strip_buttons_layer()')
         return Layer(mute_button=self._button_1,
                      solo_button=self._button_2,
                      arm_button=self._button_3,
@@ -327,13 +342,13 @@ class AAA(ControlSurface):
 
 
     def _create_channel_strip_encoders_layer(self):
-        logger.info('in _create_channel_strip_encoders_layer()')
+        logger.debug('in _create_channel_strip_encoders_layer()')
         return Layer(volume_control=self._pedal_a,
                      pan_control=self._pedal_b)
     
 
     def _create_transport_control_layer(self):
-        logger.info('in _create_transport_control_layer()')
+        logger.debug('in _create_transport_control_layer()')
         return Layer(play_button=self._button_1,
                      stop_button=self._button_2,
                     record_button=self._button_3,
@@ -342,22 +357,22 @@ class AAA(ControlSurface):
 
 
     def _create_mute_layer(self):
-        logger.info('in _create_mute_layer()')
+        logger.debug('in _create_mute_layer()')
         return Layer(mute_buttons=self.clip_launch_matrix)
 
 
     def _create_solo_layer(self):
-        logger.info('in _create_solo_layer()')
+        logger.debug('in _create_solo_layer()')
         return Layer(solo_buttons=self.clip_launch_matrix)
 
 
     def _create_arm_layer(self):
-        logger.info('in _create_arm_layer()')
+        logger.debug('in _create_arm_layer()')
         return Layer(arm_buttons=self.clip_launch_matrix)
 
 
     def _create_view_control(self):
-        logger.info('in _create_view_control()')
+        logger.debug('in _create_view_control()')
         self._view_control = ViewControlComponent(is_enabled=False,
           layer=self._create_track_navigation_layer(),
           name='View_Control')
@@ -383,14 +398,17 @@ class AAA(ControlSurface):
                         'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17,
                         'S': 18, 'T': 19, 'U': 20, 'V': 21, 'W': 22, 'X': 23,
                         'Y': 24, 'Z': 25, ' ': 27 }
-        MODE_LOOKUP = {'br_arm': 'A', 'br_solo': 'S', 'br_launch': 'L', 'br_mute': 'M', 'br_chan_strip': 'C',
-                       'br_transport': 'T', 'br_dev': 'D', 'launch': 'L', 'dev': 'D', 'chan_strip': 'C',
+        MODE_LOOKUP = {'launch': 'S', 'dev': 'D', 'chan_strip': 'C',
+                       'br_l_arm': 'A', 'br_l_solo': 'S', 'br_l_launch': 'L', 'br_l_mute': 'M', 
+                       'br_c_chan_strip': 'C', 'br_c_transport': 'T',
+                       'br_d_dev': 'D', 'br_d_chan_strip': 'C', 
+                       'br_tbd_transport': 'T', 
                       }
 
         main_mode_char = MODE_LOOKUP.get(self._session_mode, ' ')
         sub_mode_char = MODE_LOOKUP.get(self._bottom_row_mode, ' ')
 
-        logger.debug('midi message, chars: {} {}, value: '.format(main_mode_char, sub_mode_char))
+        logger.info('midi message, chars: {} {}, value: '.format(main_mode_char, sub_mode_char))
         midi_msg_1 = (CC_STATUS + CHANNEL, DISPLAY_1_CC, ASCII_LOOKUP.get(main_mode_char, 27))
         midi_msg_2 = (CC_STATUS + CHANNEL, DISPLAY_2_CC, ASCII_LOOKUP.get(sub_mode_char, 27))
         midi_clear_1 = (CC_STATUS + CHANNEL, DISPLAY_1_CC, 27)
@@ -549,7 +567,7 @@ class AAA(ControlSurface):
     def __on_session_mode_changed(self, selected_mode):
         logger.info('__on_session_mode_changed(): mode = {}'.format(selected_mode))
         self._session_mode = selected_mode
-        # self.fcb1010_display_modes()
+        self.fcb1010_display_modes()
 
     @listens('selected_mode')
     def __on_bottom_row_modes_changed(self, selected_mode):
