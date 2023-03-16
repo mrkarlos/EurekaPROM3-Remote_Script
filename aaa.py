@@ -69,7 +69,9 @@ class AAA(ControlSurface):
         bug = app.get_bugfix_version() # get the bugfix version from the App
         self.show_message(str(maj) + "." + str(min) + "." + str(bug)) #put them together and use the ControlSurface show_message method to output version info to console
 
-        logger.debug('Completed init')
+        self.fcb1010_display_modes()
+
+        logger.info('Completed init')
 
 
     def _create_controls(self):
@@ -97,10 +99,11 @@ class AAA(ControlSurface):
         pedal_pair_raw = [self._pedal_a, self._pedal_b]
         self.pedal_pair_matrix = ButtonMatrixElement(rows=[pedal_pair_raw], name='Pedal_Pair_Matrix')
 
-        device_parameter_controls_raw = [self._pedal_a, self._pedal_b]
-        self.device_parameter_controls = ButtonMatrixElement(rows=[device_parameter_controls_raw], name='Device_Parameter_Controls')
-        device_on_off_button_matrix_raw = [self._button_1, self._button_2, self._button_3, self._button_4]
-        self.device_on_off_buttons = ButtonMatrixElement(rows=[device_on_off_button_matrix_raw], name='Device_On_off_Buttons')
+        device_parameter_controls_raw = [[self._pedal_a, self._pedal_b]]
+        self.device_parameter_controls = ButtonMatrixElement(rows=device_parameter_controls_raw, name='Device_Parameter_Controls')
+
+        device_on_off_button_matrix_raw = [[self._button_1, self._button_2, self._button_3, self._button_4]]
+        self.device_on_off_buttons = ButtonMatrixElement(rows=device_on_off_button_matrix_raw, name='Device_On_off_Buttons')
 
         # Clip launch configs
         clip_buttons_horizontal_raw = [[self._button_1, self._button_2, self._button_3, self._button_4]]
@@ -128,28 +131,28 @@ class AAA(ControlSurface):
           layer=Layer(cycle_mode_button=(self._button_0)))
         self._session_modes.add_mode('launch', ( 
               EnablingMode((self._session_ring)),
-              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_l_launch'),
               LayerMode((self._session_navigation), layer=self._create_session_navigation_layer()),
               LayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
+              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_l_launch'),
             ),
-            behaviour=(MomentaryBehaviour()) )
+            behaviour=(ImmediateBehaviour()) )
         self._session_modes.add_mode('dev', (
-              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_d_dev'),
               LayerMode((self._device_parameters), layer=self._create_device_parameter_layer()),
               LayerMode((self._device_navigation), layer=self._create_device_navigation_layer()),
+              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_d_dev'),
             ),
-            behaviour=(MomentaryBehaviour()) )
+            behaviour=(ImmediateBehaviour()) )
         self._session_modes.add_mode('chan_strip', (
-              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_c_chan_strip'),
               LayerMode((self._device_parameters), layer=self._create_device_parameter_layer()),
               LayerMode((self._device_navigation), layer=self._create_device_navigation_layer()),
               LayerMode((self._mixer.selected_strip), layer=self._create_channel_strip_encoders_layer()),
+              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_c_chan_strip'),
             ),
-            behaviour=(MomentaryBehaviour()) )
-        self._session_modes.selected_mode = 'launch'
-        self.fcb1010_display_modes()
-        self._session_modes.set_enabled(True)
+            behaviour=(ImmediateBehaviour()) )
+        # self.fcb1010_display_modes()
         self._AAA__on_session_mode_changed.subject = self._session_modes
+        self._session_modes.set_enabled(True)
+        self._session_modes.selected_mode = 'launch'
 
         # device_layer_mode = LayerMode(self._device, Layer(parameter_controls=(self._encoders)))
         # device_navigation_layer_mode = LayerMode(self._device_navigation, Layer(device_nav_right_button=(self._forward_button),
@@ -193,6 +196,11 @@ class AAA(ControlSurface):
               LayerMode((self._bottom_row_modes), layer=Layer(br_c_transport_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour()) )
+        # self._bottom_row_modes.add_mode('br_c_launch', ( 
+        #       LayerMode((self._vertical_session), layer=self._create_vertical_session_layer()),
+        #       LayerMode((self._bottom_row_modes), layer=Layer(br_c_transport_button=self._button_5))
+        #     ),
+        #     behaviour=(ImmediateBehaviour()) )
         self._bottom_row_modes.add_mode('br_c_transport', (
               LayerMode((self._transport), layer=self._create_transport_control_layer()),
               LayerMode((self._bottom_row_modes), layer=Layer(br_c_chan_strip_button=self._button_5))
@@ -213,10 +221,10 @@ class AAA(ControlSurface):
               LayerMode((self._bottom_row_modes), layer=Layer(br_c_chan_strip_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour()) )
-        self._bottom_row_modes.selected_mode = 'br_l_launch'
-        self.fcb1010_display_modes()
-        self._bottom_row_modes.set_enabled(True)
         self._AAA__on_bottom_row_modes_changed.subject = self._bottom_row_modes
+        self._bottom_row_modes.set_enabled(True)
+        self._bottom_row_modes.selected_mode = 'br_l_launch'
+        # self.fcb1010_display_modes()
 
 
 
@@ -269,6 +277,7 @@ class AAA(ControlSurface):
           num_scenes=SESSION_WIDTH)
         self._vertical_session = MySessionComponent(name='Vertical_Session',
           is_enabled=False,
+        #   layer=self._create_vertical_session_layer(),
           session_ring=(self._vertical_session_ring))
         self._vertical_session_navigation = MySessionNavigationComponent(name='Vertical_Session_Navigation',
           is_enabled=False,
@@ -390,7 +399,9 @@ class AAA(ControlSurface):
         name=('{}_Displays'.format(name)))
 
 
-    def fcb1010_display_modes(self):
+    def fcb1010_display_modes(self, segment=None):
+        logger.info('in fcb1010_display_modes(), segment: {}'.format(segment))
+
         DISPLAY_1_CC = 109
         DISPLAY_2_CC = 110
         ASCII_LOOKUP = {'A':  0, 'B':  1, 'C':  2, 'D':  3, 'E':  4, 'F':  5, 
@@ -409,22 +420,38 @@ class AAA(ControlSurface):
         sub_mode_char = MODE_LOOKUP.get(self._bottom_row_mode, ' ')
 
         logger.info('midi message, chars: {} {}, value: '.format(main_mode_char, sub_mode_char))
-        midi_msg_1 = (CC_STATUS + CHANNEL, DISPLAY_1_CC, ASCII_LOOKUP.get(main_mode_char, 27))
-        midi_msg_2 = (CC_STATUS + CHANNEL, DISPLAY_2_CC, ASCII_LOOKUP.get(sub_mode_char, 27))
-        midi_clear_1 = (CC_STATUS + CHANNEL, DISPLAY_1_CC, 27)
-        midi_clear_2 = (CC_STATUS + CHANNEL, DISPLAY_2_CC, 27)
-        midi_pp_1 = midi.pretty_print_bytes(midi_msg_1)
-        logger.debug('midi message, mode: {}, value: '.format(self._session_mode) + midi_pp_1)
-        midi_pp_2 = midi.pretty_print_bytes(midi_msg_2)
-        logger.debug('midi message, mode: {}, value: '.format(self._bottom_row_mode) + midi_pp_2)
-        self._do_send_midi(midi_clear_1)
-        time.sleep(0.05)
-        self._do_send_midi(midi_clear_2)
-        time.sleep(0.05)
-        self._do_send_midi(midi_msg_1)
-        time.sleep(0.05)
-        self._do_send_midi(midi_msg_2)
-        time.sleep(0.05)
+        midi_msg_left = (CC_STATUS + CHANNEL, DISPLAY_1_CC, ASCII_LOOKUP.get(main_mode_char, 27))
+        midi_msg_right = (CC_STATUS + CHANNEL, DISPLAY_2_CC, ASCII_LOOKUP.get(sub_mode_char, 27))
+        midi_clear_left = (CC_STATUS + CHANNEL, DISPLAY_1_CC, 27)
+        midi_clear_right = (CC_STATUS + CHANNEL, DISPLAY_2_CC, 27)
+        midi_pp_left = midi.pretty_print_bytes(midi_msg_left)
+        logger.debug('midi message, mode: {}, value: '.format(self._session_mode) + midi_pp_left)
+        midi_pp_right = midi.pretty_print_bytes(midi_msg_right)
+        logger.debug('midi message, mode: {}, value: '.format(self._bottom_row_mode) + midi_pp_right)
+        if segment == 'left':
+            logger.info('in fcb1010_display_modes(), update LEFT segment')
+            # self._do_send_midi(midi_clear_left)
+            # time.sleep(0.05)
+            self._do_send_midi(midi_msg_left)
+            time.sleep(0.05)
+        elif segment == 'right':
+            logger.info('in fcb1010_display_modes(), update RIGHT segment')
+            # self._do_send_midi(midi_clear_right)
+            # time.sleep(0.05)
+            self._do_send_midi(midi_msg_right)
+            time.sleep(0.05)
+        else:
+            logger.info('in fcb1010_display_modes(), update BOTH segments')
+            # self._do_send_midi(midi_clear_left)
+            # time.sleep(0.05)
+            # self._do_send_midi(midi_clear_right)
+            # time.sleep(0.05)
+            self._do_send_midi(midi_msg_left)
+            time.sleep(0.05)
+            self._do_send_midi(midi_msg_right)
+            time.sleep(0.05)
+
+
 
 
     def fcb1010_display_mode(self, mode):
@@ -567,13 +594,13 @@ class AAA(ControlSurface):
     def __on_session_mode_changed(self, selected_mode):
         logger.info('__on_session_mode_changed(): mode = {}'.format(selected_mode))
         self._session_mode = selected_mode
-        self.fcb1010_display_modes()
+        self.fcb1010_display_modes(segment='left')
 
     @listens('selected_mode')
     def __on_bottom_row_modes_changed(self, selected_mode):
         logger.info('__on_bottom_row_modes_changed(): mode = {}'.format(selected_mode))
         self._bottom_row_mode = selected_mode
-        self.fcb1010_display_modes()
+        self.fcb1010_display_modes(segment='right')
 
     def update(self):
         super(AAA, self).update()
