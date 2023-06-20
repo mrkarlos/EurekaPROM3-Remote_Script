@@ -3,13 +3,13 @@ from __future__ import absolute_import, print_function, unicode_literals
 from future.moves.itertools import zip_longest
 import Live
 import logging
-from ableton.v2.base import listens, liveobj_valid
+from ableton.v2.base import listens, liveobj_valid, index_if
 from ableton.v2.control_surface import Component, device_to_appoint
-from ableton.v2.control_surface.control import ButtonControl
+from ableton.v2.control_surface.control import ButtonControl, control_list
 from ableton.v2.control_surface.components import FlattenedDeviceChain
 
-from .my_switch_control import MySwitchControl, MyMappedSwitchControl
-from .my_live_api_utils import release_control, collect_devices
+from .fcb_switch_control import FcbSwitchControl, FcbMappedSwitchControl
+from .fcb_live_api_utils import release_control, collect_devices
 
 logger = logging.getLogger(__name__)
 
@@ -26,22 +26,27 @@ def on_off_parameter(device):
                             logger.info('in on_off_parameter() valid and enabled')
                             return p
                         
-class MySimpleDeviceNavigationComponent(Component):
+class FcbSimpleDeviceNavigationComponent(Component):
     """A class for left/right navigation of the device chain"""
 
-    next_button = MySwitchControl()
-    prev_button = MySwitchControl()
-    on_off_control_1 = MyMappedSwitchControl(color='Device.Off', on_color='Device.On')
-    on_off_control_2 = MyMappedSwitchControl(color='Device.Off', on_color='Device.On')
-    on_off_control_3 = MyMappedSwitchControl(color='Device.Off', on_color='Device.On')
-    on_off_control_4 = MyMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    next_button = FcbSwitchControl()
+    prev_button = FcbSwitchControl()
+    on_off_control_1 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    on_off_control_2 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    on_off_control_3 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    on_off_control_4 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
 
     def __init__(self, *args, **keywords):
         logger.info('in __init()__')
-        (super(MySimpleDeviceNavigationComponent, self).__init__)(*args, **keywords)
+        super().__init__(*args, **keywords)
         self._chain = []
+        self._devices = 0
+        self._selected_device = None
+        self._selected_device_index = None
         self._on_off_controls = [self.on_off_control_1, self.on_off_control_2, self.on_off_control_3, self.on_off_control_4]
-        self._MySimpleDeviceNavigationComponent__on_selected_track_changed.subject = self.song.view
+        self._FcbSimpleDeviceNavigationComponent__on_selected_track_changed.subject = self.song.view
+        self._FcbSimpleDeviceNavigationComponent__device_selection_in_track_changed.subject = self.song.view.selected_track.view
+
 
 
     def set_device_on_off_buttons(self, buttons):
@@ -64,6 +69,21 @@ class MySimpleDeviceNavigationComponent(Component):
         logger.info('in prev_button().pressed')
         self._scroll_device_chain(NavDirection.left)
 
+    def _update_scroll_buttons(self):
+        self.prev_button.enabled = self.can_scroll_down()
+        self.next_button.enabled = self.can_scroll_up()
+
+    def can_scroll_up(self):
+        current_selected_device = self.song.view.selected_track.view.selected_device
+        current_selected_device_index = index_if(lambda i: i[0] == current_selected_device, self._chain)
+        logger.info('can_scroll_up - index: {} of {} devices'.format(current_selected_device_index, len(self._chain)))
+        return current_selected_device_index < (len(self._chain) -1)
+
+    def can_scroll_down(self):
+        current_selected_device = self.song.view.selected_track.view.selected_device
+        current_selected_device_index = index_if(lambda i: i[0] == current_selected_device, self._chain)
+        logger.info('can_scroll_down - index: {} of {} devices'.format(current_selected_device_index, len(self._chain)))
+        return current_selected_device_index > 0
 
     @on_off_control_1.pressed
     def on_off_control_1(self, value):
@@ -88,11 +108,14 @@ class MySimpleDeviceNavigationComponent(Component):
     def _scroll_device_chain(self, direction):
         logger.info('in _scroll_device_chain()')
         view = self.application.view
+
         if not (view.is_view_visible('Detail') and view.is_view_visible('Detail/DeviceChain')):
             view.show_view('Detail')
             view.show_view('Detail/DeviceChain')
         else:
             view.scroll_view(direction, 'Detail/DeviceChain', False)
+
+        self._update_scroll_buttons()
 
 
     def _current_track(self):
@@ -109,17 +132,19 @@ class MySimpleDeviceNavigationComponent(Component):
         self._selected_track = self.song.view.selected_track
         self._update_track_device_chain()
 
-    """#TODO: Add some code to deal with a device change. This will unhook the device
+    """#TODO: Add some code to deal with a device change. This should unhook the device
     on/off buttons and re-attach the on-off buttons of the new device"""
-    @listens('device')
-    def __on_device_changed(self):
-        logger.info('in __on_device_changed()')
-        pass
+    # @listens('selected_device')
+    # def __on_selected_device_changed(self):
+    #     logger.info('in __on_device_changed().listens')
+    #     pass
 
 
     @listens('selected_track')
     def __on_selected_track_changed(self):
         logger.info('in __on_selected_track_changed().listens')
+        self._FcbSimpleDeviceNavigationComponent__device_selection_in_track_changed.subject = self.song.view.selected_track.view
+
         self._update_selected_track()
 
 
@@ -127,6 +152,7 @@ class MySimpleDeviceNavigationComponent(Component):
         logger.info('in _update_track_device_chain()')
         self._chain = collect_devices(self._selected_track)
         self._print_device_chain()
+        # unmap the parameters of the previous devices before an update
         for control in self._on_off_controls:
             control.mapped_parameter = None
         self.update()
@@ -143,8 +169,9 @@ class MySimpleDeviceNavigationComponent(Component):
 
     def update(self):
         logger.info('update()')
-        super(MySimpleDeviceNavigationComponent, self).update()
+        super(FcbSimpleDeviceNavigationComponent, self).update()
         self._connect_on_off_parameters()
+        self._update_scroll_buttons()
 
 
     def _connect_on_off_parameters(self):
@@ -157,13 +184,7 @@ class MySimpleDeviceNavigationComponent(Component):
                         if liveobj_valid(parameter):
                                 control.mapped_parameter = parameter
 
-    # @listens('selected_device')
-    # def _device_selection_in_track_changed(self):
-    #     logger.info('in _device_selection_in_track_changed()')
-    #     new_selection = self.song.view.selected_track.view.selected_device
-    #     self._update_item_provider(new_selection)
-
-
-    # def _update_item_provider(self, selection):
-    #     logger.info('in _device_selection_in_track_changed()')
-    #     self._flattened_chain.selected_item = selection
+    @listens('selected_device')
+    def __device_selection_in_track_changed(self):
+        logger.info('in _device_selection_in_track_changed()')
+        self._update_selected_track()

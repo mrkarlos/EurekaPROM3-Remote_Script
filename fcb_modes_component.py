@@ -1,22 +1,23 @@
 from __future__ import absolute_import, print_function, unicode_literals
 from ableton.v2.control_surface.mode import MomentaryBehaviour, LatchingBehaviour
-# from ableton.v2.control_surface.control import ButtonControl
+from ableton.v2.control_surface.control import ButtonControl
 from ableton.v2.control_surface.mode import ModesComponent, MomentaryBehaviour, LatchingBehaviour
-from .my_switch_control import MySwitchControl
+
+from .fcb_switch_control import FcbSwitchControl
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class MyModesComponent(ModesComponent):
-    cycle_up_mode_button = MySwitchControl()
+class FcbModesComponent(ModesComponent):
+    cycle_up_mode_button = FcbSwitchControl()
     # cycle_down_mode_button = ButtonControl()
-    cycle_mode_button = MySwitchControl()
+    cycle_mode_button = FcbSwitchControl()
     # default_behaviour = LatchingBehaviour()
 
     def __init__(self, *args, **keywords):
         logger.info('in __init__()')
-        (super(MyModesComponent, self).__init__)(*args, **keywords)
+        super().__init__(*args, **keywords)
         pass
 
 

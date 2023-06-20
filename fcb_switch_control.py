@@ -3,13 +3,13 @@ from __future__ import absolute_import, print_function, unicode_literals
 from ableton.v2.base import EventObject, listens, liveobj_valid
 from ableton.v2.control_surface.control import ButtonControl, ButtonControlBase, control_color
 
-from .my_live_api_utils import toggle_or_cycle_parameter_value
+from .fcb_live_api_utils import toggle_or_cycle_parameter_value
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class MySwitchControl(ButtonControl):
+class FcbSwitchControl(ButtonControl):
 
     class State(ButtonControl.State):
         color = control_color('DefaultButton.On')
@@ -18,7 +18,7 @@ class MySwitchControl(ButtonControl):
 
         def __init__(self, *args, color=None, on_color=None, **kwargs):
             logger.info('in __init__()')
-            (super(MySwitchControl.State, self).__init__)(*args, **kwargs)
+            super().__init__(*args, **kwargs)
             if color is not None:
                 self.color = color
             if on_color is not None:
@@ -49,30 +49,30 @@ class MySwitchControl(ButtonControl):
                 
         def _on_pressed(self):
             logger.info('in _on_pressed()')
-            super(MySwitchControl.State, self)._on_pressed()
+            super(FcbSwitchControl.State, self)._on_pressed()
 
 
         def _on_released(self):
             logger.info('in _on_released()')
-            super(MySwitchControl.State, self)._on_released()
+            super(FcbSwitchControl.State, self)._on_released()
 
 
     def __init__(self, *args, **kwargs):
         logger.info('in __init__()')
-        (super(MySwitchControl, self).__init__)(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
-class MyMappableSwitch(EventObject):
+class FcbMappableSwitch(EventObject):
 
     def __init__(self, *a, **k):
         logger.info('in __init__()')
-        (super(MyMappableSwitch, self).__init__)(*a, **k)
+        super().__init__(*a, **k)
         self._parameter = None
 
     def disconnect(self):
         logger.info('in disconnect()')
         self._parameter = None
-        super(MyMappableSwitch, self).disconnect()
+        super(FcbMappableSwitch, self).disconnect()
 
     @property
     def mapped_parameter(self):
@@ -84,8 +84,8 @@ class MyMappableSwitch(EventObject):
         logger.info('in mapped_parameter().setter')
         self._parameter = parameter if liveobj_valid(parameter) else None
         self.enabled = self._parameter is not None
-        self._MyMappableSwitch__on_parameter_value_changed.subject = self._parameter
-        self._MyMappableSwitch__on_parameter_value_changed()
+        self._FcbMappableSwitch__on_parameter_value_changed.subject = self._parameter
+        self._FcbMappableSwitch__on_parameter_value_changed()
 
     @listens('value')
     def __on_parameter_value_changed(self):
@@ -93,13 +93,13 @@ class MyMappableSwitch(EventObject):
         self.is_on = liveobj_valid(self._parameter) and self._parameter.value
 
 
-class MyMappedSwitchControl(MySwitchControl):
+class FcbMappedSwitchControl(FcbSwitchControl):
 
-    class State(MySwitchControl.State, MyMappableSwitch):
+    class State(FcbSwitchControl.State, FcbMappableSwitch):
 
         def __init__(self, *args, **kwargs):
-            logger.info('MyMappedSwitchControl.State in __init__()')
-            (super(MyMappedSwitchControl.State, self).__init__)(*args, **kwargs)
+            logger.info('FcbMappedSwitchControl.State in __init__()')
+            super(FcbMappedSwitchControl.State, self).__init__(*args, **kwargs)
             self.enabled = False
 
 
@@ -110,6 +110,6 @@ class MyMappedSwitchControl(MySwitchControl):
 
 
     def __init__(self, *args, **kwargs):
-        logger.info('MyMappedSwitchControl in __init__()')
-        (super(MyMappedSwitchControl, self).__init__)(*args, **kwargs)
+        logger.info('FcbMappedSwitchControl in __init__()')
+        super().__init__(*args, **kwargs)
 

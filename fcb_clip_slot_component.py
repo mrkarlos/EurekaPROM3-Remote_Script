@@ -3,20 +3,20 @@ from __future__ import absolute_import, print_function, unicode_literals
 import Live
 from ableton.v2.base import listens, liveobj_valid
 from ableton.v2.control_surface.components.clip_slot import ClipSlotComponent, find_nearest_color, is_button_pressed
-# from ableton.v2.control_surface.control import ButtonControl
+from ableton.v2.control_surface.control import ButtonControl
 
-from .my_switch_control import MySwitchControl
+from .fcb_switch_control import FcbSwitchControl
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class MyClipSlotComponent(ClipSlotComponent):
-    launch_button = MySwitchControl()
+class FcbClipSlotComponent(ClipSlotComponent):
+    launch_button = FcbSwitchControl()
 
     def __init__(self, *a, **k):
         logger.info('in __init__()')
-        (super(MyClipSlotComponent, self).__init__)(*a, **k)
+        super().__init__(*a, **k)
 
 
     # @launch_button.released

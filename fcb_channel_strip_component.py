@@ -2,21 +2,23 @@
 from __future__ import absolute_import, print_function, unicode_literals
 from ableton.v2.base import liveobj_valid
 from ableton.v2.control_surface.components import ChannelStripComponent
-# from ableton.v2.control_surface.control import ButtonControl
+from ableton.v2.control_surface.control import ButtonControl
 
-from .my_switch_control import MySwitchControl
+from .fcb_switch_control import FcbSwitchControl
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class MyChannelStripComponent(ChannelStripComponent):
+class FcbChannelStripComponent(ChannelStripComponent):
     # clip_launch_button = ButtonControl()
-    track_stop_button = MySwitchControl()
+    track_stop_button = FcbSwitchControl()
+    # track_stop_button = ButtonControl()
 
     def __init__(self, *args, **keywords):
         logger.info('in __init__()')
-        (super(MyChannelStripComponent, self).__init__)(*args, **keywords)
+        super().__init__(*args, **keywords)
+        self._invert_mute_feedback = True
 
 
     # @clip_launch_button.pressed

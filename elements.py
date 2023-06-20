@@ -16,6 +16,8 @@ NUM_TRACKS = 4
 NUM_SCENES = 1
 SESSION_WIDTH = 4
 SESSION_HEIGHT = 1
+V_SESSION_WIDTH = 1
+V_SESSION_HEIGHT = 4
 
 
 def create_display_element(header, name=None):

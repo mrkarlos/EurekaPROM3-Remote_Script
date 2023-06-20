@@ -2,21 +2,21 @@
 from __future__ import absolute_import, print_function, unicode_literals
 from ableton.v2.control_surface.components import ScrollComponent, Scrollable
 
-from .my_switch_control import MySwitchControl
+from .fcb_switch_control import FcbSwitchControl
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-class MyScrollComponent(ScrollComponent, Scrollable):
-    # scroll_up_button = MySwitchControl()
-    # scroll_down_button = MySwitchControl()
-    scroll_up_down_button = MySwitchControl()
-    scroll_left_right_button = MySwitchControl()
+class FcbScrollComponent(ScrollComponent, Scrollable):
+    # scroll_up_button = FcbSwitchControl()
+    # scroll_down_button = FcbSwitchControl()
+    scroll_up_down_button = FcbSwitchControl()
+    scroll_left_right_button = FcbSwitchControl()
 
     def __init__(self, scrollable=None, *a, **k):
         logger.info('in __init__()')
-        (super(MyScrollComponent, self).__init__)(*a, **k)
+        super().__init__(*a, **k)
         self._scroll_task_up = self._make_scroll_task(self._do_scroll_up)
         self._scroll_task_down = self._make_scroll_task(self._do_scroll_down)
         if scrollable != None:

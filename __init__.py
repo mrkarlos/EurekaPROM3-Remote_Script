@@ -1,7 +1,7 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 from ableton.v2.control_surface.capabilities import CONTROLLER_ID_KEY, NOTES_CC, PORTS_KEY, REMOTE, SCRIPT, controller_id, inport, outport
-from .aaa import AAA
+from .fcb_eureka import FCB_Eureka
 
 def get_capabilities():
     return {
@@ -15,4 +15,4 @@ def get_capabilities():
     }
 
 def create_instance(c_instance):
-    return AAA(c_instance=c_instance)
+    return FCB_Eureka(c_instance=c_instance)

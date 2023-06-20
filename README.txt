@@ -14,7 +14,7 @@ When creating modes create the main element e.g. _mixer and leave the controls t
 ControlSurface
 
 SessionModesComponent
-''' This is the high level componnt that controls the session. It contains:
+''' This is the high level component that controls the session. It contains:
 
     name
     is_enabled
