@@ -35,6 +35,14 @@ class FcbSimpleDeviceNavigationComponent(Component):
     on_off_control_2 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
     on_off_control_3 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
     on_off_control_4 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    on_off_control_5 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    on_off_control_6 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    on_off_control_7 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    on_off_control_8 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    on_off_control_9 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    on_off_control_10 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    on_off_control_11 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
+    on_off_control_12 = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
 
     def __init__(self, *args, **keywords):
         logger.info('in __init()__')
@@ -43,7 +51,10 @@ class FcbSimpleDeviceNavigationComponent(Component):
         self._devices = 0
         self._selected_device = None
         self._selected_device_index = None
-        self._on_off_controls = [self.on_off_control_1, self.on_off_control_2, self.on_off_control_3, self.on_off_control_4]
+        self._on_off_controls = [self.on_off_control_1, self.on_off_control_2, self.on_off_control_3, self.on_off_control_4,
+                                 self.on_off_control_5, self.on_off_control_6, self.on_off_control_7, self.on_off_control_8,
+                                 self.on_off_control_9, self.on_off_control_10, self.on_off_control_11, self.on_off_control_12
+                                ]
         self._FcbSimpleDeviceNavigationComponent__on_selected_track_changed.subject = self.song.view
         self._FcbSimpleDeviceNavigationComponent__device_selection_in_track_changed.subject = self.song.view.selected_track.view
 

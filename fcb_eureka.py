@@ -164,7 +164,7 @@ class FCB_Eureka(ControlSurface):
         self._session_modes.add_mode('dev', (
               AddLayerMode((self._device_parameters), layer=self._create_device_parameter_layer()),
               AddLayerMode((self._device_navigation), layer=self._create_device_navigation_layer()),
-              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_d_dev'),
+              SetAttributeMode(self._bottom_row_modes, 'selected_mode', 'br_d_dev_1_4'),
             ),
             behaviour=(ImmediateBehaviour()) )
         self._session_modes.add_mode('chan_strip', (
@@ -252,14 +252,24 @@ class FCB_Eureka(ControlSurface):
               LayerMode((self._bottom_row_modes), layer=Layer(br_c_chan_strip_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour()) )
-        self._bottom_row_modes.add_mode('br_d_dev', (
-              LayerMode((self._device_navigation), layer=self._create_device_navigation_on_off_layer()),
+        self._bottom_row_modes.add_mode('br_d_dev_1_4', (
+              LayerMode((self._device_navigation), layer=self._create_device_navigation_on_off_layer_1_to_4()),
+              LayerMode((self._bottom_row_modes), layer=Layer(br_d_dev_5_8_button=self._button_5))
+            ),
+            behaviour=(ImmediateBehaviour()) )
+        self._bottom_row_modes.add_mode('br_d_dev_5_8', (
+              LayerMode((self._device_navigation), layer=self._create_device_navigation_on_off_layer_5_to_8()),
+              LayerMode((self._bottom_row_modes), layer=Layer(br_d_dev_9_12_button=self._button_5))
+            ),
+            behaviour=(ImmediateBehaviour()) )
+        self._bottom_row_modes.add_mode('br_d_dev_9_12', (
+              LayerMode((self._device_navigation), layer=self._create_device_navigation_on_off_layer_9_to_12()),
               LayerMode((self._bottom_row_modes), layer=Layer(br_d_chan_strip_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour()) )
         self._bottom_row_modes.add_mode('br_d_chan_strip', (
               LayerMode((self._vertical_mixer.selected_strip), layer=self._create_channel_strip_buttons_layer()),
-              LayerMode((self._bottom_row_modes), layer=Layer(br_d_dev_button=self._button_5))
+              LayerMode((self._bottom_row_modes), layer=Layer(br_d_dev_1_4_button=self._button_5))
             ),
             behaviour=(ImmediateBehaviour()) )       
         self._bottom_row_modes.add_mode('br_tbd_transport', (
@@ -396,6 +406,28 @@ class FCB_Eureka(ControlSurface):
                      on_off_control_3=self._button_3,
                      on_off_control_4=self._button_4,
                     )
+    def _create_device_navigation_on_off_layer_1_to_4(self):
+        logger.info('in _create_device_navigation_on_off_layer_1_to_4()')
+        return Layer(on_off_control_1=self._button_1,
+                     on_off_control_2=self._button_2,
+                     on_off_control_3=self._button_3,
+                     on_off_control_4=self._button_4,
+                    )
+
+    def _create_device_navigation_on_off_layer_5_to_8(self):
+        logger.info('in _create_device_navigation_on_off_layer_5_to_9()')
+        return Layer(on_off_control_5=self._button_1,
+                     on_off_control_6=self._button_2,
+                     on_off_control_7=self._button_3,
+                     on_off_control_8=self._button_4,
+                    )
+    def _create_device_navigation_on_off_layer_9_to_12(self):
+        logger.info('in _create_device_navigation_on_off_layer_9_to_12()')
+        return Layer(on_off_control_9=self._button_1,
+                     on_off_control_10=self._button_2,
+                     on_off_control_11=self._button_3,
+                     on_off_control_12=self._button_4,
+                    )
 
     def _create_device_parameter_layer(self):
         logger.info('in _create_device_parameter_layer()')
@@ -477,18 +509,27 @@ class FCB_Eureka(ControlSurface):
     def fcb1010_display_modes(self, segment=None):
         logger.info('in fcb1010_display_modes(), segment: {}'.format(segment))
 
-        DISPLAY_1_CC = 109
-        DISPLAY_2_CC = 110
+        ASCII_CC = 109
+        NUM_CC = 113
+
         ASCII_LOOKUP = {'A':  0, 'B':  1, 'C':  2, 'D':  3, 'E':  4, 'F':  5, 
                         'G':  6, 'H':  7, 'I':  8, 'J':  9, 'K': 10, 'L': 11,
                         'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17,
                         'S': 18, 'T': 19, 'U': 20, 'V': 21, 'W': 22, 'X': 23,
                         'Y': 24, 'Z': 25, ' ': 27 }
+        CHAR_LOOKUP = {'A': [ASCII_CC, 0], 'B': [ASCII_CC, 1], 'C': [ASCII_CC, 2], 'D': [ASCII_CC, 3], 'E': [ASCII_CC, 4], 'F': [ASCII_CC, 5], 
+                        'G': [ASCII_CC, 6], 'H': [ASCII_CC, 7], 'I': [ASCII_CC, 8], 'J': [ASCII_CC, 9], 'K': [ASCII_CC, 10], 'L': [ASCII_CC, 11],
+                        'M': [ASCII_CC, 12], 'N': [ASCII_CC, 13], 'O': [ASCII_CC, 14], 'P': [ASCII_CC, 15], 'Q': [ASCII_CC, 16], 'R': [ASCII_CC, 17],
+                        'S': [ASCII_CC, 18], 'T': [ASCII_CC, 19], 'U': [ASCII_CC, 20], 'V': [ASCII_CC, 21], 'W': [ASCII_CC, 22], 'X': [ASCII_CC, 23],
+                        'Y': [ASCII_CC, 24], 'Z': [ASCII_CC, 25], ' ': [ASCII_CC, 27],
+                        '0': [NUM_CC, 0], '1': [NUM_CC, 1], '2': [NUM_CC, 2], '3': [NUM_CC, 3], '4': [NUM_CC, 4], '5': [NUM_CC, 5],
+                        '6': [NUM_CC, 6], '7': [NUM_CC, 7], '8': [NUM_CC, 8], '9': [NUM_CC, 9]
+                      }
         MODE_LOOKUP = {'launch_horz': 'H', 'launch_vertical': 'S', 'dev': 'D', 'chan_strip': 'T',
                        'br_lh_arm': 'A', 'br_lh_solo': 'S', 'br_lh_launch': 'L', 'br_lh_mute': 'M', 
                        'br_lv_clip_launch': 'L', 'br_lv_scene_launch': 'S', 'br_lv_transport': 'T', 'br_lv_chan_strip': 'C',
                        'br_c_chan_strip': 'C', 'br_c_transport': 'T',
-                       'br_d_dev': 'D', 'br_d_chan_strip': 'C', 
+                       'br_d_dev_1_4': '1', 'br_d_dev_5_8': '5', 'br_d_dev_9_12': '9', 'br_d_chan_strip': 'C', 
                        'br_tbd_transport': 'T', 
                       }
 
@@ -496,10 +537,18 @@ class FCB_Eureka(ControlSurface):
         sub_mode_char = MODE_LOOKUP.get(self._bottom_row_mode, ' ')
 
         logger.info('midi message, chars: {} {}, value: '.format(main_mode_char, sub_mode_char))
-        midi_msg_left = (CC_STATUS + CHANNEL, DISPLAY_1_CC, ASCII_LOOKUP.get(main_mode_char, 27))
-        midi_msg_right = (CC_STATUS + CHANNEL, DISPLAY_2_CC, ASCII_LOOKUP.get(sub_mode_char, 27))
-        midi_clear_left = (CC_STATUS + CHANNEL, DISPLAY_1_CC, 27)
-        midi_clear_right = (CC_STATUS + CHANNEL, DISPLAY_2_CC, 27)
+        left_midi_cc, left_midi_value =  CHAR_LOOKUP.get(main_mode_char, 27)
+        right_midi_cc, right_midi_value =  CHAR_LOOKUP.get(sub_mode_char, 27)
+        right_midi_cc = right_midi_cc + 1
+        logger.info('midi message left char, cc: {}, value: {}'.format(left_midi_cc, left_midi_value))
+        logger.info('midi message right char, cc: {}, value: {}'.format(right_midi_cc, right_midi_value))
+
+        # midi_msg_left = (CC_STATUS + CHANNEL, ASCII_CC, ASCII_LOOKUP.get(main_mode_char, 27))
+        # midi_msg_right = (CC_STATUS + CHANNEL, ASCII_CC + 1, ASCII_LOOKUP.get(sub_mode_char, 27))
+        midi_msg_left = (CC_STATUS + CHANNEL, left_midi_cc, left_midi_value)
+        midi_msg_right = (CC_STATUS + CHANNEL, right_midi_cc, right_midi_value)
+        midi_clear_left = (CC_STATUS + CHANNEL, ASCII_CC, 27)
+        midi_clear_right = (CC_STATUS + CHANNEL, ASCII_CC + 1, 27)
         midi_pp_left = midi.pretty_print_bytes(midi_msg_left)
         logger.info('midi message, mode: {}, value: '.format(self._session_mode) + midi_pp_left)
         midi_pp_right = midi.pretty_print_bytes(midi_msg_right)
