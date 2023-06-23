@@ -8,6 +8,7 @@ from ableton.v2.control_surface.control import ToggleButtonControl
 from .fixed_radio_button_group import FixedRadioButtonGroup
 from .fcb_switch_control import FcbMappedSwitchControl
 from .fcb_live_api_utils import release_control, collect_devices
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,6 @@ class FcbSimpleDeviceParameterComponent(Component):
       unchecked_color='Mode.Device.Bank.Available',
       checked_color='Mode.Device.Bank.Selected')
     device_lock_button = ToggleButtonControl()
-    # device_on_off_control = FcbMappedSwitchControl(color='Device.Off', on_color='Device.On')
 
     @depends(device_provider=None)
     def __init__(self, device_provider=None, device_bank_registry=None, toggle_lock=None, use_parameter_banks=False, *a, **k):
@@ -40,67 +40,67 @@ class FcbSimpleDeviceParameterComponent(Component):
 
     @bank_select_buttons.checked
     def bank_select_buttons(self, button):
-        logger.debug('bank_select_buttons().checked')
+        logger.info('bank_select_buttons().checked')
         self._on_bank_select_button_checked(button)
 
     def _on_bank_select_button_checked(self, button):
-        logger.debug('_on_bank_select_button_checked()')
+        logger.info('_on_bank_select_button_checked()')
         self.bank_index = button.index
 
     @bank_select_buttons.value
     def bank_select_buttons(self, value, _):
-        logger.debug('bank_select_buttons()')
+        logger.info('bank_select_buttons()')
         if not value:
             self._on_bank_select_button_released()
 
     def _on_bank_select_button_released(self):
-        logger.debug('_on_bank_select_button_released()')
+        logger.info('_on_bank_select_button_released()')
         pass
 
     @device_lock_button.toggled
     def device_lock_button(self, *_):
-        logger.debug('device_lock_button().toggled')
+        logger.info('device_lock_button().toggled')
         self._on_device_lock_button_toggled()
 
     def _on_device_lock_button_toggled(self):
-        logger.debug('_on_device_lock_button_toggled()')
+        logger.info('_on_device_lock_button_toggled()')
         self._toggle_lock()
         self._update_device_lock_button()
 
     @property
     def bank_index(self):
-        logger.debug('bank_index.property()')
+        logger.info('bank_index.property()')
         if self._use_parameter_banks:
             return self._bank_index
         return 0
 
     @bank_index.setter
     def bank_index(self, value):
-        logger.debug('bank_index.setter()')
+        logger.info('bank_index.setter()')
         self._bank_index = self._clamp_to_bank_size(value)
         if self._device_bank_registry:
             self._device_bank_registry.set_device_bank(self._device, self._bank_index)
         self.update()
 
     def _clamp_to_bank_size(self, value):
-        logger.debug('_clamp_to_bank_size()')
+        logger.info('_clamp_to_bank_size()')
         return clamp(value, 0, self.num_banks - 1)
 
     @property
     def selected_bank(self):
-        logger.debug('selected_bank().property')
+        logger.info('selected_bank().property')
         if self.num_banks:
             return self._banks[(self._bank_index or 0)]
         return []
 
     @property
     def num_banks(self):
-        logger.debug('num_banks().property')
+        logger.info('num_banks().property')
         return len(self._banks)
 
 
     def set_parameter_controls(self, controls):
-        logger.debug('set_parameter_controls()')
+        logger.info('set_parameter_controls()')
         for control in self._parameter_controls or []:
             release_control(control)
 
@@ -132,14 +132,14 @@ class FcbSimpleDeviceParameterComponent(Component):
 
     @listens('device_bank')
     def __on_bank_changed(self, device, bank):
-        logger.debug('__on_bank_changed().listens')
+        logger.info('__on_bank_changed().listens')
         if device == self._device:
             self.bank_index = bank
 
 
     @listens('is_locked_to_device')
     def __on_is_locked_to_device_changed(self):
-        logger.debug('__on_is_locked_to_device_changed().listens')
+        logger.info('__on_is_locked_to_device_changed().listens')
         self._update_device_lock_button()
 
 
@@ -159,17 +159,16 @@ class FcbSimpleDeviceParameterComponent(Component):
 
 
     def _disconnect_parameters(self):
-        logger.debug('_disconnect_parameters()')
+        logger.info('_disconnect_parameters()')
         for control in self._parameter_controls or []:
             release_control(control)
             self._empty_control_slots.register_slot(control, nop, 'value')
-        # self.device_on_off_button.mapped_parameter = None
         self._on_off_control = None
 
 
 
     def _connect_parameters(self):
-        logger.debug('_connect_parameters()')
+        logger.info('_connect_parameters()')
         for control, parameter in zip_longest(self._parameter_controls or [], self.selected_bank):
             if liveobj_valid(control):
                 if liveobj_valid(parameter):
@@ -177,7 +176,6 @@ class FcbSimpleDeviceParameterComponent(Component):
                 else:
                     control.release_parameter()
                     self._empty_control_slots.register_slot(control, nop, 'value')
-        # self.device_on_off_button.mapped_parameter = self._on_off_parameter()
         if liveobj_valid(self._on_off_control):
             parameter = self._on_off_parameter()
             if liveobj_valid(parameter):
@@ -195,7 +193,7 @@ class FcbSimpleDeviceParameterComponent(Component):
 
 
     def _update_parameter_banks(self):
-        logger.debug('_update_parameter_banks()')
+        logger.info('_update_parameter_banks()')
         if liveobj_valid(self._device):
             if self._use_parameter_banks:
                 self._banks = parameter_banks(self._device)
@@ -208,12 +206,12 @@ class FcbSimpleDeviceParameterComponent(Component):
 
 
     def _update_bank_select_buttons(self):
-        logger.debug('_update_bank_select_buttons()')
+        logger.info('_update_bank_select_buttons()')
         self.bank_select_buttons.active_control_count = self.num_banks
         if self.bank_index < self.num_banks:
             self.bank_select_buttons[self.bank_index].is_checked = True
 
 
     def _update_device_lock_button(self):
-        logger.debug('_update_device_lock_button()')
+        logger.info('_update_device_lock_button()')
         self.device_lock_button.is_toggled = self._device_provider.is_locked_to_device

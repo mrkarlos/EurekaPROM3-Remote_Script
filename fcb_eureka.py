@@ -454,7 +454,7 @@ class FCB_Eureka(ControlSurface):
         return Layer(play_button=self._button_1,
                      stop_button=self._button_2,
                      record_button=self._button_3,
-                     stop_all_clips_button=self._button_4,
+                     metronome_button=self._button_4,
                     )
 
 

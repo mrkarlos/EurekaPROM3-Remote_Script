@@ -4,19 +4,22 @@ from functools import partial
 from ableton.v2.base import lazy_attribute, task
 import ableton.v2.control_surface.control as ButtonControlBase
 from ableton.v2.control_surface.control import control_color
+from ableton.v2.control_surface.control import ButtonControl, ToggleButtonControl
 
-DEFAULT_BLINK_PERIOD = 0.3
+DEFAULT_BLINK_PERIOD = 0.4
 
-class BlinkingButtonControl(ButtonControlBase):
+class FcbBlinkingButtonControl(ButtonControl):
 
-    class State(ButtonControlBase.State):
+    class State(ButtonControl.State):
         blink_on_color = control_color('DefaultButton.On')
         blink_off_color = control_color('DefaultButton.Off')
 
         def __init__(self, blink_on_color='DefaultButton.On', blink_off_color='DefaultButton.Off', blink_period=DEFAULT_BLINK_PERIOD, *a, **k):
-            (super(BlinkingButtonControl.State, self).__init__)(*a, **k)
+            (super(FcbBlinkingButtonControl.State, self).__init__)(*a, **k)
             self.blink_on_color = blink_on_color
             self.blink_off_color = blink_off_color
+            self._untoggled_color = 'DefaultButton.Off'
+            self._toggled_color = 'DefaultButton.On'
             self._blink_period = blink_period
 
         def start_blinking(self):
@@ -36,5 +39,5 @@ class BlinkingButtonControl(ButtonControlBase):
                 self._control_element.set_light(color)
 
         def _kill_all_tasks(self):
-            super(BlinkingButtonControl.State, self)._kill_all_tasks()
+            super(FcbBlinkingButtonControl.State, self)._kill_all_tasks()
             self._blink_task.kill()

@@ -2,13 +2,14 @@
 from __future__ import absolute_import, print_function, unicode_literals
 from future.moves.itertools import zip_longest
 import Live
-import logging
+import logging, re
 from ableton.v2.base import listens, liveobj_valid, index_if
 from ableton.v2.control_surface import Component, device_to_appoint
 from ableton.v2.control_surface.control import ButtonControl, control_list
 from ableton.v2.control_surface.components import FlattenedDeviceChain
 
 from .fcb_switch_control import FcbSwitchControl, FcbMappedSwitchControl
+# from .fcb_blinking_button import FcbBlinkingButtonControl
 from .fcb_live_api_utils import release_control, collect_devices
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ class FcbSimpleDeviceNavigationComponent(Component):
         logger.info('in __init()__')
         super().__init__(*args, **keywords)
         self._chain = []
+        self._labelled_chain = []
         self._devices = 0
         self._selected_device = None
         self._selected_device_index = None
@@ -59,6 +61,9 @@ class FcbSimpleDeviceNavigationComponent(Component):
         self._FcbSimpleDeviceNavigationComponent__device_selection_in_track_changed.subject = self.song.view.selected_track.view
 
 
+    @property
+    def has_labelled_chain(self):
+        return len(self._labelled_chain) > 0
 
     def set_device_on_off_buttons(self, buttons):
         logger.info('in set_device_on_off_buttons()')
@@ -162,20 +167,52 @@ class FcbSimpleDeviceNavigationComponent(Component):
     def _update_track_device_chain(self):
         logger.info('in _update_track_device_chain()')
         self._chain = collect_devices(self._selected_track)
+        self._update_track_device_labelled_chain()
         self._print_device_chain()
+        self._print_device_labelled_chain()
         # unmap the parameters of the previous devices before an update
         for control in self._on_off_controls:
             control.mapped_parameter = None
         self.update()
 
+    def _update_track_device_labelled_chain(self):
+        logger.info('in _update_track_device_labelled_chain()')
+        self._labelled_chain = []
+        labelled_chain = []
+        for index, (device, _) in enumerate(self._chain):
+            dev_name = getattr(device, 'name', "No name")
+
+            match = re.search(r"\[B(\d+)\]$", dev_name)
+            if match:
+                num_str = match.group(1)
+                logger.info('  postfix: {}'.format(num_str))
+                num = int(num_str)
+                logger.info('    num: {}'.format(num))
+                if 1 <= num <= 12:
+                    labelled_chain.append((device, num))
+
+        self._labelled_chain = sorted(labelled_chain, key=lambda x: x[1])  # Sort based on the second element of each tuple
+
+
 
     def _print_device_chain(self):
+        logger.info('in _print_device_chain()')
         for index, (device, nesting_level) in enumerate(self._chain):
             dev_class = getattr(device, 'class_name', "No class")
             dev_name = getattr(device, 'name', "No name")
             dev_type = getattr(device, 'type', "No name")
             logger.info('index: {} chain/device: \n\tname: {}, \n\ttype: {}, \n\tclass {}\n\tlevel: {}'.format(index, dev_name, dev_type, dev_class, nesting_level))
-            parameter = on_off_parameter(device)
+
+    def _print_device_labelled_chain(self):
+        logger.info('in _print_device_labelled_chain()')
+        if self.has_labelled_chain:
+            for index, (device, position) in enumerate(self._labelled_chain):
+                dev_class = getattr(device, 'class_name', "No class")
+                dev_name = getattr(device, 'name', "No name")
+                dev_type = getattr(device, 'type', "No name")
+                logger.info('index: {} chain/device: \n\tname: {}, \n\ttype: {}, \n\tclass {}\n\tpostion: {}'.format(index, dev_name, dev_type, dev_class, position))
+        else:
+            logger.info('No labelled chain info defined in the device names')
 
 
     def update(self):
